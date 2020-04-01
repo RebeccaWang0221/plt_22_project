@@ -2,7 +2,7 @@
 
 type op = Add | Sub | Mult | Div | Mod | Eq | Neq | Less | And | Or | Lt | Gt | Lte | Gte | AddEq | SubEq | MultEq | DivEq
 
-type typ = Int | String | Bool | Float | Char | Lst | Dict | Stct
+type typ = Int | String | Bool | Float | Char | Lst of typ | Dict | Stct of string * ((string * ty) list)
 
 (* expressions *)
 type expr = 
@@ -30,7 +30,7 @@ type stmt =
   | For expr * expr * expr * stmt
   | Return of expr
 
-(* bind types to variable names *)
+(* bind types to variable names *)t
 type bind = typ * string
 
 (* functions definitions *)
