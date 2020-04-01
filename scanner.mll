@@ -1,6 +1,6 @@
 (* Ocamllex scanner for Rattlesnake *)
 
-(*{ open Parser }*)
+{ open Parser }
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
@@ -15,6 +15,7 @@ rule token = parse
   | "["     { RBRACK }
   | "]"     { LBRACK }
   | ";"			{ SEMI }
+  | ":"     { COLON }
   | "+"			{ PLUS }
   | "-"     { MINUS }
   | "/"     { DIVIDE }
@@ -41,16 +42,19 @@ rule token = parse
   | "return" 	{ RETURN }
   | "break"		{ BREAK }
   | "continue"	{ CONT }
-  | "int"		{ INT }
+  | "int"		  { INT }
   | "char"		{ CHAR }
   | "float"		{ FLOAT }
   | "string"	{ STRING }
   | "bool"		{ BOOL }
+  | "null"    { NULL }
   | "true"		{ BLIT(true) }
   | "false"		{ BLIT(false) }
   | "list"		{ LIST }
   | "dict"		{ DICT }
-  | "def"		{ DEF }
+  | "struct"  { STCT }
+  | "def"		  { DEF }
+  | "print"   { PRINT }
   | digit+ as lem { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem { FLOATLIT(float_of_string lem) }
   | '"'letter*'"' as lem { STRLIT(lem) }
