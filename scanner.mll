@@ -57,7 +57,7 @@ rule token = parse
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
   | '"'letter*'"' as lem  { STRLIT(lem) }
-  (* | \[.*\] as lem  { LSTLIT(lem) } *)
+  | "[.*]" as lem  { LSTLIT(lem) } 
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }

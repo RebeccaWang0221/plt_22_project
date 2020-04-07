@@ -10,6 +10,7 @@
 %token <bool> BLIT
 %token <string> STRLIT
 %token <string> ID
+%token <string> LSTLIT
 %token EOF
 
 %start program
@@ -37,7 +38,7 @@ typ:
   | BOOL  { Bool }
   | CHAR  { Char }
   | STCT  { Stct }
-  | typ LIST  { Lst($1) }
+  | LIST  { Lst }
 
 decls:
 	{ ([], []) }     /* nothing */
@@ -46,6 +47,7 @@ decls:
 
 vdecl:
     typ ID  { ($1, $2) }
+  | typ ID ASSIGN expr  { DecAssign(($1, $2), $4)}
 
 vdecl_list:
     { [] }     /* nothing */
@@ -74,6 +76,7 @@ expr:
   | INTLIT  { IntLit($1) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
+  | LSTLIT { LstLit($1) }
   | ID  { Id($1) }
   | expr PLUS expr  { Binop($1, Add, $3) }
   | expr MINUS expr  { Binop($1, Sub, $3) }
@@ -93,10 +96,10 @@ expr:
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
   | ID ASSIGN expr  { Assign($1, $3) }
-  /* | vdecl ASSIGN expr { DecAssign($1, $3) } */
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
-  /* | ID LBRACK lst_op RBRACK  { (* TODO *) } */
+  | PRINT LPAREN expr RPAREN  { Print($3) }
+  | ID LBRACK expr RBRACK  { Slice($1, $3) }
 
 stmt: 
     expr SEMI  { Expr $1 }
@@ -122,18 +125,6 @@ args_opt:
 args: 
     expr  { $1::[] }
   | expr COMMA args  { $1::$3 }
-
-/*
-lst_op:
-    INTLIT  { IntLit($1) }
-  | ID  { Id($1) }
-  | expr PLUS expr  { Binop($1, Add, $3) }
-  | expr MINUS expr  { Binop($1, Sub, $3) }
-  | expr TIMES expr  { Binop($1, Mult, $3) }
-  | expr DIVIDE expr  { Binop($1, Div, $3) }
-*/
-
-
 
 
 
