@@ -14,10 +14,14 @@ rule token = parse
   | "]"   { LBRACK }
   | ";"  { SEMI }
   | ":"  { COLON }
+  | ","  { COMMA }
   | "+"  { PLUS }
   | "-"  { MINUS }
   | "/"  { DIVIDE }
   | "*"  { TIMES }
+  | "**"  { EXP }  (* TODO: Unary operators *)
+  | "++"  { INC }  (* TODO: Unary operators *)
+  | "--"  { DEC }  (* TODO: Unary operators *)
   | "%"  { MOD }
   | "+="  { PEQ }
   | "-="  { MEQ }
@@ -32,16 +36,19 @@ rule token = parse
   | "<="  { LTE }
   | "and"  { AND }
   | "or"  { OR }
+  | "not"  { NOT }  (* TODO: Unary operators *)
   | "if"  { IF }
   | "else"  { ELSE }
   | "elif"  { ELIF }
-  | "in"  { IN }
+  | "in"  { IN }  (* TODO: in *)
   | "for"  { FOR }
   | "while"  { WHILE }
   | "do"  { DO }
+  | "range"  { RANGE }  (* TODO: for in range *)
   | "return"  { RETURN }
   | "break"  { BREAK }
   | "continue"  { CONT }
+  | "pass"  { PASS }
   | "int"  { INT }
   | "char"  { CHAR }
   | "float"  { FLOAT }
@@ -50,13 +57,13 @@ rule token = parse
   | "none"  { NONE }
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
-  | "list"  { LIST }
-  | "struct"  { STCT }
+  | "list"  { LIST }  (* TODO: lists *)
+  | "struct"  { STCT }  (* TODO: structs *)
   | "def"  { DEF }
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
-  | '"'letter*'"' as lem  { STRLIT(lem) }
+  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) }
   | "[.*]" as lem  { LSTLIT(lem) } 
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }

@@ -1,10 +1,10 @@
 %{ open Ast %}
 
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS DIVIDE TIMES MOD PEQ MEQ TEQ DEQ ASSIGN
-%token EQ NEQ LT GT LTE GTE AND OR
+%token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL NONE
 %token LIST STCT DEF
-%token RETURN BREAK CONT COMMA PRINT
+%token RETURN BREAK CONT PASS COMMA PRINT
 %token <int> INTLIT
 %token <float> FLOATLIT
 %token <bool> BLIT
@@ -47,7 +47,6 @@ decls:
 
 vdecl:
     typ ID  { ($1, $2) }
-  | typ ID ASSIGN expr  { DecAssign(($1, $2), $4)}
 
 vdecl_list:
     { [] }     /* nothing */
@@ -83,10 +82,6 @@ expr:
   | expr TIMES expr  { Binop($1, Mult, $3) }
   | expr DIVIDE expr  { Binop($1, Div, $3) }
   | expr MOD expr  { Binop($1, Mod, $3) }
-  | expr PEQ expr  { Binop($1, AddEq, $3) }
-  | expr MEQ expr  { Binop($1, SubEq, $3) }
-  | expr TEQ expr  { Binop($1, MultEq, $3) }
-  | expr DEQ expr  { Binop($1, DivEq, $3) }
   | expr EQ expr  { Binop($1, Eq, $3) }
   | expr NEQ expr  { Binop($1, Neq, $3) }
   | expr LT expr  { Binop($1, Lt, $3) }
@@ -95,28 +90,32 @@ expr:
   | expr GTE expr  { Binop($1, Gte, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
-  | ID ASSIGN expr  { Assign($1, $3) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
   | PRINT LPAREN expr RPAREN  { Print($3) }
-  | ID LBRACK expr RBRACK  { Slice($1, $3) }
+  | ID LBRACK expr RBRACK  { Access($1, $3) }
+  | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 
 stmt: 
     expr SEMI  { Expr $1 }
   | LBRACE stmt_list RBRACE  { Block $2 }
-  | IF expr LBRACE stmt_list RBRACE if_stmts  { (If($2, $4), $6) }
+  | IF expr LBRACE stmt_list RBRACE { If($2, $4) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
   | FOR expr SEMI expr SEMI expr LBRACE stmt_list RBRACE  { For($2, $4, $6, $8) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
+  | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
+  | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
+  | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
+  | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
+  | expr ASSIGN expr  { Assign($1, $3) }
+  | vdecl ASSIGN expr  { DecAssign($1, $3) }
+  | CONT SEMI  { Cont }
+  | BREAK SEMI  { Break }
+  | PASS SEMI  { Pass }
 
 stmt_list:
     { [] }     /* nothing */
   | stmt stmt_list  { $1::$2 }
-    
-if_stmts:
-    { [] }
-  | ELIF expr LBRACE stmt_list RBRACE if_stmts  { (Elif($2, %4), $6) }
-  | ELSE LBRACE stmt_list RBRACE  { Else($3) }
 
 args_opt:
     { [] }     /* nothing */
