@@ -3,7 +3,7 @@
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS DIVIDE TIMES MOD PEQ MEQ TEQ DEQ ASSIGN
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL NONE
-%token LIST STCT DEF
+%token LIST STCT DEF RANGE
 %token RETURN BREAK CONT PASS COMMA PRINT
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -107,8 +107,8 @@ stmt:
   | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
   | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
   | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
-  | expr ASSIGN expr  { Assign($1, $3) }
-  | vdecl ASSIGN expr  { DecAssign($1, $3) }
+  | expr ASSIGN expr SEMI  { Assign($1, $3) }
+  | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
   | PASS SEMI  { Pass }
