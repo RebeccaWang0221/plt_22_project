@@ -29,46 +29,31 @@
 %%
 
 program: 
-    decls EOF  { $1 }
+    stmt_list EOF  { $1 }
 
-typ:
-    INT  { Int }
-  | FLOAT  { Float }
-  | STRING  { String }
-  | BOOL  { Bool }
-  | CHAR  { Char }
-  | STCT  { Stct }
-  | LIST  { Lst }
-
-decls:
-	{ ([], []) }     /* nothing */
-  | vdecl SEMI decls  { (($1::fst $3), snd $3) }
-  | fdecl decls  { (fst $2, ($1::snd $2)) }
-
-vdecl:
-    typ ID  { ($1, $2) }
-
-vdecl_list:
+stmt_list:
     { [] }     /* nothing */
-  | vdecl SEMI vdecl_list  { $1::$3 }
+  | stmt stmt_list  { $1::$2 }
 
-fdecl:
-    DEF ID LPAREN fcall_args RPAREN LBRACE vdecl_list stmt_list RBRACE   
-    { 
-      {
-        fname=$2;
-        formals=$4;
-        locals=$7;
-        body=$8;
-      }
-    }
-
-fcall_args:
-    fargs_list  { $1 }
-
-fargs_list:
-    vdecl  { $1::[] }
-  | vdecl COMMA fargs_list  { $1::$3 }
+stmt: 
+    expr SEMI  { Expr $1 }
+  | vdecl SEMI  { $1 }
+  | fdecl  { $1 }
+  | LBRACE stmt_list RBRACE  { Block $2 }
+  | IF expr LBRACE stmt_list RBRACE { If($2, $4) }
+  | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
+  | FOR expr SEMI expr SEMI expr LBRACE stmt_list RBRACE  { For($2, $4, $6, $8) }
+  | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
+  | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
+  | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
+  | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
+  | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
+  | expr ASSIGN expr SEMI  { Assign($1, $3) }
+  | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
+  | RETURN expr SEMI  { Return $2 }
+  | CONT SEMI  { Cont }
+  | BREAK SEMI  { Break }
+  | PASS SEMI  { Pass }
 
 expr:
     BLIT  { BoolLit($1) }
@@ -96,26 +81,27 @@ expr:
   | ID LBRACK expr RBRACK  { Access($1, $3) }
   | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 
-stmt: 
-    expr SEMI  { Expr $1 }
-  | LBRACE stmt_list RBRACE  { Block $2 }
-  | IF expr LBRACE stmt_list RBRACE { If($2, $4) }
-  | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
-  | FOR expr SEMI expr SEMI expr LBRACE stmt_list RBRACE  { For($2, $4, $6, $8) }
-  | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
-  | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
-  | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
-  | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
-  | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
-  | expr ASSIGN expr SEMI  { Assign($1, $3) }
-  | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
-  | CONT SEMI  { Cont }
-  | BREAK SEMI  { Break }
-  | PASS SEMI  { Pass }
+typ:
+    INT  { Int }
+  | FLOAT  { Float }
+  | STRING  { String }
+  | BOOL  { Bool }
+  | CHAR  { Char }
+  | STCT  { Stct }
+  | LIST  { Lst }
 
-stmt_list:
-    { [] }     /* nothing */
-  | stmt stmt_list  { $1::$2 }
+vdecl:
+    typ ID  { Bind($1, $2) }
+
+fdecl:
+    DEF ID LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }
+
+fcall_args:
+    fargs_list  { $1 }
+
+fargs_list:
+    vdecl  { $1::[] }
+  | vdecl COMMA fargs_list  { $1::$3 }
 
 args_opt:
     { [] }     /* nothing */
