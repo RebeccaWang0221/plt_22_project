@@ -1,6 +1,6 @@
 type op = Add | Sub | Mult | Div | Mod | Eq | Neq | Less | And | Or | Lt | Gt | Lte | Gte | AddEq | SubEq | MultEq | DivEq
 
-type un = Inc | Dec | Exp
+type un = Inc | Dec 
 
 type typ = Int | String | Bool | Float | Char | Lst | Stct 
 
@@ -28,7 +28,7 @@ type stmt =
   | FuncDef of string * stmt list * stmt list
   | If of expr * stmt list  (* TODO: if statements *)
   | While of expr * stmt list
-  | For of expr * expr * expr * stmt list (* TODO: for in range *)
+  | ForRange of stmt * expr * stmt list (* TODO: for in object *)
   | Do of stmt list * expr
   | Return of expr 
   | Assign of expr * expr

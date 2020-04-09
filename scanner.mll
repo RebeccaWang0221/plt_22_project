@@ -44,7 +44,7 @@ rule token = parse
   | "for"  { FOR }
   | "while"  { WHILE }
   | "do"  { DO }
-  | "range"  { RANGE }  (* TODO: for in range *)
+  | "range"  { RANGE }  
   | "return"  { RETURN }
   | "break"  { BREAK }
   | "continue"  { CONT }
@@ -57,14 +57,14 @@ rule token = parse
   | "none"  { NONE }
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
-  | "list"  { LIST }  (* TODO: lists *)
+  | "list"  { LIST }  
   | "struct"  { STCT }  (* TODO: structs *)
   | "def"  { DEF }
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
   | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) }
-  | "[.*]" as lem  { LSTLIT(lem) } 
+  | "[.*]" as lem  { LSTLIT(lem) }  (* TODO: fix this regex *)
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }

@@ -42,7 +42,7 @@ stmt:
   | LBRACE stmt_list RBRACE  { Block $2 }
   | IF expr LBRACE stmt_list RBRACE { If($2, $4) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
-  | FOR expr SEMI expr SEMI expr LBRACE stmt_list RBRACE  { For($2, $4, $6, $8) }
+  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { ForRange($2, $6, $9) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
   | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
   | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
