@@ -24,29 +24,20 @@ type expr =
 type stmt = 
     Block of stmt list
   | Expr of expr
+  | Bind of typ * string
+  | FuncDef of string * stmt list * stmt list
   | If of expr * stmt list  (* TODO: if statements *)
   | While of expr * stmt list
   | For of expr * expr * expr * stmt list (* TODO: for in range *)
   | Do of stmt list * expr
   | Return of expr 
   | Assign of expr * expr
-  | DecAssign of (typ * string) * expr
+  | DecAssign of stmt * expr
   | Cont 
   | Break
   | Pass
 
-(* bind types to variable names *)
-type bind = typ * string
-
-(* functions definitions *)
-type func_def = {
-  fname: string;        (* function name *)
-  formals: bind list;   (* formal params *)
-  locals: bind list;    (* local vars *)
-  body: stmt list;      (* body of function *)
-}
-
-type program = bind list * func_def list
+type program = stmt list
 
 
 
