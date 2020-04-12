@@ -29,10 +29,10 @@
 %%
 
 program: 
-    stmt_list EOF  { $1 }
+    stmt_list EOF  { List.rev $1 }
 
 stmt_list:
-    { [] }     /* nothing */
+    { [] } 
   | stmt stmt_list  { $1::$2 }
 
 stmt: 
@@ -40,9 +40,10 @@ stmt:
   | vdecl SEMI  { $1 }
   | fdecl  { $1 }
   | LBRACE stmt_list RBRACE  { Block $2 }
-  | IF expr LBRACE stmt_list RBRACE { If($2, $4) }
+  | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
-  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { ForRange($2, $6, $9) }
+  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { For($2, $6, $9) }
+  | FOR vdecl IN expr LBRACE stmt_list RBRACE  { For($2, $4, $6) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
   | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
   | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
@@ -54,6 +55,11 @@ stmt:
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
   | PASS SEMI  { Pass }
+
+dstmt:
+    { [] }
+  | ELIF expr LBRACE stmt_list RBRACE dstmt  { Elif($2, $4)::$6 } 
+  | ELSE LBRACE stmt_list RBRACE dstmt { Else($3)::$5 }
 
 expr:
     BLIT  { BoolLit($1) }
@@ -75,6 +81,9 @@ expr:
   | expr GTE expr  { Binop($1, Gte, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
+  | ID INC  { Unop($1, Inc) }
+  | ID DEC  { Unop($1, Dec) }
+  | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
   | PRINT LPAREN expr RPAREN  { Print($3) }
@@ -104,7 +113,7 @@ fargs_list:
   | vdecl COMMA fargs_list  { $1::$3 }
 
 args_opt:
-    { [] }     /* nothing */
+    { [] }     
   | args  { $1 }
 
 args: 
