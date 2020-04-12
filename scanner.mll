@@ -19,9 +19,9 @@ rule token = parse
   | "-"  { MINUS }
   | "/"  { DIVIDE }
   | "*"  { TIMES }
-  | "**"  { EXP }  (* TODO: Unary operators *)
-  | "++"  { INC }  (* TODO: Unary operators *)
-  | "--"  { DEC }  (* TODO: Unary operators *)
+  | "**"  { EXP }  
+  | "++"  { INC }  
+  | "--"  { DEC }  
   | "%"  { MOD }
   | "+="  { PEQ }
   | "-="  { MEQ }
@@ -36,11 +36,11 @@ rule token = parse
   | "<="  { LTE }
   | "and"  { AND }
   | "or"  { OR }
-  | "not"  { NOT }  (* TODO: Unary operators *)
+  | ("not" | "!")  { NOT }  
   | "if"  { IF }
   | "else"  { ELSE }
   | "elif"  { ELIF }
-  | "in"  { IN }  (* TODO: in *)
+  | "in"  { IN }  
   | "for"  { FOR }
   | "while"  { WHILE }
   | "do"  { DO }
@@ -64,7 +64,7 @@ rule token = parse
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
   | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) }
-  | "[.*]" as lem  { LSTLIT(lem) }  (* TODO: fix this regex *)
+  | "[.*]" as lem  { LSTLIT(lem) }   (* TODO: fix this regex *)
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
