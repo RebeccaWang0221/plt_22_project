@@ -35,6 +35,7 @@ type stmt =
   | Return of expr 
   | Assign of expr * expr
   | DecAssign of stmt * expr
+  | Struct of string * stmt list
   | Cont 
   | Break
   | Pass

@@ -52,6 +52,7 @@ stmt:
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
+  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) } 
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
   | PASS SEMI  { Pass }
@@ -96,11 +97,14 @@ typ:
   | STRING  { String }
   | BOOL  { Bool }
   | CHAR  { Char }
-  | STCT  { Stct }
   | LIST  { Lst }
 
 vdecl:
     typ ID  { Bind($1, $2) }
+
+vdecl_list:
+    vdecl SEMI  { $1::[] }
+  | vdecl SEMI vdecl_list  { $1::$3 }
 
 fdecl:
     DEF ID LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }

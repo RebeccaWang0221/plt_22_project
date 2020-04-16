@@ -58,7 +58,7 @@ rule token = parse
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
   | "list"  { LIST }  
-  | "struct"  { STCT }  (* TODO: structs *)
+  | "struct"  { STCT } 
   | "def"  { DEF }
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
