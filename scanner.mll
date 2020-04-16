@@ -63,8 +63,8 @@ rule token = parse
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
-  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) }
-  | "[.*]" as lem  { LSTLIT(lem) }   (* TODO: fix this regex *)
+  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
+  | "[.*]" as lem  { LSTLIT(lem) }   (* TODO: fix this regex to match [1,2,3,4] *)
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
