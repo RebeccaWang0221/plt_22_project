@@ -11,7 +11,7 @@ type expr =
   | BoolLit of bool 
   | FloatLit of float 
   | CharLit of char 
-  | LstLit of string
+  | LstLit of string (* TODO: change LstLit to hold list value not string *)
   | Id of string 
   | Binop of expr * op * expr 
   | Unop of string * un
@@ -25,7 +25,7 @@ type stmt =
     Block of stmt list
   | Expr of expr
   | Bind of typ * string
-  | FuncDef of string * stmt list * stmt list
+  | FuncDef of (typ * string) * stmt list * stmt list
   | If of expr * stmt list * stmt list
   | Elif of expr * stmt list
   | Else of stmt list
