@@ -71,6 +71,12 @@ let check stmts (vars, funcs) =
 	  | Call(fname, args) -> (* make sure arguments match types in func_def *)
 
 	  | Print ex -> (* ensure ex is valid for print *)
+	    let (t1, e1) = check_expr e in
+	    let t = match t1 with
+	      | Int | Float | Bool | String | Char | Lst -> t1
+	      | _ -> raise (Failure ("cannot print expression of type " ^ t))
+	    in
+	    (t, SPrint(t1, e1))
 
 	  | Access(var, ex) -> (* ensure var is of list type and ex results in an int *)
 
