@@ -1,4 +1,4 @@
-type op = Add | Sub | Mult | Div | Mod | Eq | Neq | Less | And | Or | Lt | Gt | Lte | Gte | AddEq | SubEq | MultEq | DivEq
+type op = Add | Sub | Mult | Div | Mod | Eq | Neq | And | Or | Lt | Gt | Lte | Gte 
 
 type un = Inc | Dec | Not
 
