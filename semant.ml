@@ -20,6 +20,24 @@ let check stmts (vars, funcs) =
 
 	in 
 
+	let rec check_func_locals = function
+	  | [] -> []
+	  | Bind(t, s) as st :: tail -> check_stmt st :: check_func_locals tail
+	  | Assign(e1, e1) as st :: tail -> check_stmt st :: check_func_locals tail
+	  | DecAssign(s, e) as st :: tail -> check_stmt st :: check_func_locals tail
+	  | _ :: tail -> check_func_locals tail
+
+	in
+
+	let rec check_func_body = function
+	  | [] -> []
+	  | Bind(t, s) :: tail -> check_func_locals tail
+	  | Assign(e1, e1) :: tail -> check_func_locals tail
+	  | DecAssign(s, e) :: tail -> check_func_locals tail
+	  | _ as st :: tail -> check_stmt st :: check_func_locals tail
+
+	in
+
 	let rec check_expr = function 
 	  | IntLit l -> (Int, SIntLit l) (* return type bindings for literals *)
 
@@ -67,7 +85,7 @@ let check stmts (vars, funcs) =
 	  	in
 	  	(t, SUnop(var, un))
 
-	  | Call(fname, args) -> (* make sure arguments match types in func_def *)
+	  | Call(fname, args) -> (* TODO: make sure arguments match types in func_def *)
 
 	  | Print ex -> (* ensure ex is valid for print *)
 	    let (t1, e1) = check_expr e in
@@ -77,28 +95,42 @@ let check stmts (vars, funcs) =
 	    in
 	    (t, SPrint(t1, e1))
 
-	  | Access(var, ex) -> (* ensure var is of list type and ex results in an int *)
+	  | Access(var, ex) -> (* TODO: ensure var is of list type and ex results in an int *)
+	    let (t1, e1) = check_expr var
+	    and (t2, e2) = check_expr ex in
+	    if t1 = Lst && t2 = Int then SAccess(var, (t2, e2))
+		else raise (Failure ("list access index must be of type int"))
 
 	  | Slice(var, ex1, ex2) -> (* ensure var is of list type and ex1 and ex2 result in int *)
+	    let (t1, e1) = check_expr var
+	    and (t2, e2) = check_expr ex1
+	    and (t3, e3) = check_expr ex2 in
+	    if t1 = Lst && t2 = Int and t3 = Int then SSlice(var, (t2, e2), (t3, e3))
+		else raise (Failure ("list slice indices must be of type int"))
 
 	  | _ -> (* defualt *)
 
 	and rec check_stmt = function
 	  | Block st_lst ->	
-	  	(* 
+	  	(* TODO: 
 	  		recursively check each stmt in st_list
 	  		??? maybe should call check on st_lst with new vars map empty ???
 	  	*)
 	  | Expr ex -> check_expr ex 
 
 	  | Bind(ty, st) ->
-	  	(* 
+	  	(* TODO:
 			if st is in vars, if it is then raise error
 			if not in vars, add to map
 			return (ty, SBind(ty, st))
 	  	*)
-	  | FuncDef(bind, st1_lst, st2_lst) -> (* add func def to map *)
-
+	  | FuncDef(vdec, st1_lst, st2_lst) -> (* TODO: add func def to map *)
+	  	let Bind(ty, name) = vdecl 
+	  	and params = check_stmt_list st1_lst
+	  	and locals = check_func_locals st1_lst
+	  	and body = check_func_body st2_lst
+	 	in
+	 	SFuncDef({ srtyp=ty; sfname=name; sformals=params; slocals=locals; sbody=body })
 
 	  | If(ex, st1_lst, st2_lst) -> SIf(check_bool_expr ex, check_stmt_list st1_lst, check_stmt_list st2_lst)
 	  	
@@ -108,14 +140,22 @@ let check stmts (vars, funcs) =
 	  	
 	  | While(ex, st_lst) -> SWhile(check_bool_expr ex, check_stmt_list st_lst)
 	  	
-	  | For(st1, ex, st2_lst) -> (* have to check types match in cases like: for int x in [1,2,3] - for char c in "hello" *)
+	  | For(st1, ex, st2_lst) -> (* TODO: have to check types match in cases like: for int x in [1,2,3] - for char c in "hello" *)
 
 	  | Range(st1, ex, st2_lst) ->
+	  	let (t1, e1) = check_stmt st1 
+	  	and (t2, e2) = check_expr ex 
+	    and sst_lst = check_stmt_list st2_lst in
+	  	if t1 = t2 then
+	  	  match t1 with
+	  	    | _ when (t1 = Int && t2 = Int) -> SRange((t1, e1), (t2, e2), sst_lst)
+	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
+	  	else raise Failure("for-range loop must be used with int types but given types do not match")
 
 	  | Do(st_lst, ex) -> SDo(check_stmt_list st_lst, check_bool_expr ex)
 	  	
 	  | Return ex -> 
-	  	(* 
+	  	(* TODO: 
 	  		check ex is valid expr
 	  		check ex matches func def 
 	  		??? Need to match return with surrounding function ???
@@ -136,7 +176,7 @@ let check stmts (vars, funcs) =
 		if t1 = t2 then (t1, SDecAssign(e1, (t2, e2)))
 		else raise (Failure err)
 
-	  | Struct(s, st_lst) -> (* ??? not sure what to do here *)
+	  | Struct(s, st_lst) -> (* TODO: ??? not sure what to do here *)
 
 	  | Cont -> SCont
 

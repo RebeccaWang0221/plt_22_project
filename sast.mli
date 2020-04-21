@@ -39,8 +39,8 @@ type sstmt =
 type sfunc_def {
 	srtyp: typ;
 	sfname: string;
-	sformals: (typ * string) list;
-	slocals: (typ * string) list;
+	sformals: sstmt list;
+	slocals: sstmt list;
 	sbody: sstmt list;
 }
 
