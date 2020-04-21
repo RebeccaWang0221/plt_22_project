@@ -54,12 +54,11 @@ let check stmts (vars, funcs) =
 	  	    | _ -> raise (Failure err)
 	  	  in
 	  	  (t, SBinop((t1, e1), op, (t2, e2)))
-	  	  (* TODO: allow mixed types of int and float operations, ex: 5.5 * 2 -> Float *)
 	  	else 
 	  	  | Add | Sub | Mult | Div when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Float
 	  	  | _ -> raise (Failure err)
 
-	  | Unop(var, un) -> (* check to ensure var is and id *)
+	  | Unop(var, un) -> (* check to ensure var is an id *)
 	  	let ty = type_of_id var vars in
 	  	let t = match un with
 	  	  | Inc | Dec when ty = Int -> Int
@@ -100,6 +99,7 @@ let check stmts (vars, funcs) =
 	  	*)
 	  | FuncDef(bind, st1_lst, st2_lst) -> (* add func def to map *)
 
+
 	  | If(ex, st1_lst, st2_lst) -> SIf(check_bool_expr ex, check_stmt_list st1_lst, check_stmt_list st2_lst)
 	  	
 	  | Elif(ex, st_lst) -> SElif(check_bool_expr ex, check_stmt_list st_lst)
@@ -108,7 +108,9 @@ let check stmts (vars, funcs) =
 	  	
 	  | While(ex, st_lst) -> SWhile(check_bool_expr ex, check_stmt_list st_lst)
 	  	
-	  | For(st1, ex, st2_lst) -> (* probably have to change this in scanner/parser so that "for int x in range(10)" works *)
+	  | For(st1, ex, st2_lst) -> (* have to check types match in cases like: for int x in [1,2,3] - for char c in "hello" *)
+
+	  | Range(st1, ex, st2_lst) ->
 
 	  | Do(st_lst, ex) -> SDo(check_stmt_list st_lst, check_bool_expr ex)
 	  	
