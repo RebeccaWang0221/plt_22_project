@@ -59,7 +59,7 @@ rule token = parse
   | "false"  { BLIT(false) }
   | "list"  { LIST }  
   | "struct"  { STCT } 
-  | "def"  { DEF }
+  | "def"  { DEF }t
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
