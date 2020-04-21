@@ -25,7 +25,7 @@ type stmt =
     Block of stmt list
   | Expr of expr
   | Bind of typ * string
-  | FuncDef of (typ * string) * stmt list * stmt list
+  | FuncDef of stmt * stmt list * stmt list
   | If of expr * stmt list * stmt list
   | Elif of expr * stmt list
   | Else of stmt list

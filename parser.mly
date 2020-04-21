@@ -108,7 +108,7 @@ vdecl_list:
   | vdecl SEMI vdecl_list  { $1::$3 }
 
 fdecl:
-    DEF typ ID LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef(($2, $3), $5, $8) }
+    DEF vdecl LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }
 
 fcall_args:
     fargs_list  { $1 }
