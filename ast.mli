@@ -9,7 +9,7 @@ type expr =
   | BoolLit of bool 
   | FloatLit of float 
   | CharLit of char 
-  | LstLit of string (* TODO: change LstLit to hold list value not string *)
+  | LstLit of expr list 
   | ArrayLit of expr list
   | Id of string 
   | Binop of expr * op * expr 
@@ -23,7 +23,6 @@ type typ = Int | String | Bool | Float | Char | Lst | Stct | Array of typ * expr
 
 (* statements *)
 type stmt = 
-    Block of stmt list
   | Expr of expr
   | Bind of typ * string
   | FuncDef of stmt * stmt list * stmt list
