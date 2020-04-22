@@ -40,6 +40,7 @@ stmt:
     expr SEMI  { Expr $1 }
   | vdecl SEMI  { $1 }
   | fdecl  { $1 }
+/*  | array_decl SEMI { $1 } */
   | LBRACE stmt_list RBRACE  { Block $2 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
@@ -124,6 +125,11 @@ args_opt:
 args: 
     expr  { $1::[] }
   | expr COMMA args  { $1::$3 }
+/* TODO: fix array shift/reduce conflict 
+array_decl:
+    typ ID ASSIGN LBRACE args_opt RBRACE  { DecArr(Bind(Array($1, IntLit(List.length $5)), $2), $5) }
+  | typ ID LBRACK expr RBRACK { Bind(Array($1, $4), $2) }
+*/
 
 
 

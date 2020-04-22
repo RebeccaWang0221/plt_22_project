@@ -10,8 +10,8 @@ rule token = parse
   | ")"  { RPAREN }
   | "{"  { LBRACE }
   | "}"	  { RBRACE }
-  | "["  { RBRACK }
-  | "]"   { LBRACK }
+  | "["  { LBRACK }
+  | "]"   { RBRACK }
   | ";"  { SEMI }
   | ":"  { COLON }
   | ","  { COMMA }
@@ -59,7 +59,7 @@ rule token = parse
   | "false"  { BLIT(false) }
   | "list"  { LIST }  
   | "struct"  { STCT } 
-  | "def"  { DEF }t
+  | "def"  { DEF }
   | "print"  { PRINT }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
