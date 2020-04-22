@@ -2,6 +2,7 @@
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
+let arr = (?<="array<")("int"|"char"|"float"|"bool"|"string")(?=">")
 
 rule token = parse 
     [' ' '\t' '\r' '\n']  { token lexbuf }
@@ -61,10 +62,10 @@ rule token = parse
   | "struct"  { STCT } 
   | "def"  { DEF }
   | "print"  { PRINT }
+  | arr as ty { ARRAY(ty) }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
   | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
-  | "[.*]" as lem  { LSTLIT(lem) }   (* TODO: fix this regex to match [1,2,3,4] *)
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
