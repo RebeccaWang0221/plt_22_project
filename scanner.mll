@@ -2,7 +2,7 @@
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
-let arr = (?<="array<")("int"|"char"|"float"|"bool"|"string")(?=">")
+let arr = "(?<=array<)(int|char|float|bool|string)(?=>)"
 
 rule token = parse 
     [' ' '\t' '\r' '\n']  { token lexbuf }
