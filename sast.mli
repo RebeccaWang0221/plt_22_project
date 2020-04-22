@@ -16,8 +16,15 @@ and sx =
   | SAccess of string * sexpr
   | SSlice of string * sexpr * sexpr
 
+type sfunc_def = {
+  srtyp: typ;
+  sfname: string;
+  sformals: sstmt list;
+  slocals: sstmt list;
+  sbody: sstmt list;
+}
+
 type sstmt = 
-    SBlock of sstmt list
   | SExpr of sexpr
   | SBind of typ * string
   | SFuncDef of sfunc_def
@@ -35,14 +42,6 @@ type sstmt =
   | SCont 
   | SBreak
   | SPass
-
-type sfunc_def {
-	srtyp: typ;
-	sfname: string;
-	sformals: sstmt list;
-	slocals: sstmt list;
-	sbody: sstmt list;
-}
 
 type sprogram = sstmt list
 
