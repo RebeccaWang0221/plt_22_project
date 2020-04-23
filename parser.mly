@@ -11,6 +11,7 @@
 %token <bool> BLIT
 %token <string> STRLIT
 %token <string> ID
+%token <string> ARRAY
 %token <string> LSTLIT
 %token EOF
 
@@ -68,7 +69,7 @@ expr:
   | INTLIT  { IntLit($1) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
-  | LSTLIT { LstLit($1) }
+  /*| LSTLIT { LstLit($1) }*/
   | ID  { Id($1) }
   | expr PLUS expr  { Binop($1, Add, $3) }
   | expr MINUS expr  { Binop($1, Sub, $3) }
