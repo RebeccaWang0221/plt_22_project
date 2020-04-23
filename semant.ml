@@ -45,6 +45,11 @@ let check stmts vars funcs =
 	    (t1, e1) :: check_func_body var_map func_map tail
 
 	in
+	(* check if the return value type and the assigned type are the same*)
+	let check_assign lvaluet rvaluet err =
+    if lvaluet = rvaluet then lvaluet else raise (Failure err)
+  in
+
 
 	let rec check_expr var_map func_map = function 
 	  | IntLit l -> (var_map, func_map, (Int, SIntLit l)) (* return type bindings for literals *)
@@ -96,9 +101,20 @@ let check stmts vars funcs =
 	  	in
 	  	(var_map, func_map (t, SUnop(var, un)))
 
-	  | Call(fname, args) -> (* TODO: make sure arguments match types in func_def *)
-	  	(var_map, func_map)
-	  | Print ex -> (* ensure ex is valid for print *)
+		| Call(fname, args) -> (* TODO: make sure arguments match types in func_def *)
+			let fd = StringMap.find fname func_map in
+			let param_length = List.length fd.formals in(* need the correct vars_list *)
+			if List.length args != param_length then
+            raise (Failure ("expecting " ^ string_of_int param_length ^ " arguments"))
+			else let check_call (ft, _) e = 
+        let (_, _, (t, e')) = check_expr var_map func_map e in 
+        let err = "illegal argument found " ^ t ^ " expected " ^ ft
+        in (check_assign ft t err, e')
+      in 
+      let args' = List.map2 check_call fd.formals(* need the correct func_var *) args
+      in (var_map, func_map (fd.typ(* need the correct func_var type *), SCall(fname, args')))
+	 
+		| Print ex -> (* ensure ex is valid for print *)
 	    let (_, _, (t1, e1)) = check_expr var_map func_map e in
 	    let t = match t1 with
 	      | Int | Float | Bool | String | Char | Lst -> t1
