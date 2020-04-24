@@ -19,7 +19,7 @@ type expr =
   | Access of string * expr
   | Slice of string * expr * expr
 
-type typ = Int | String | Bool | Float | Char | Lst | Stct | Array of typ * expr
+type typ = Int | String | Bool | Float | Char | Lst | Stct | Void | Array of typ * expr
 
 (* statements *)
 type stmt = 
