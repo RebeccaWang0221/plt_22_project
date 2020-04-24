@@ -162,8 +162,10 @@ let check stmts vars funcs =
 	  | Expr ex -> let (_, _, (t, e)) = check_expr var_map func_map ex in (var_map, func_map, SExpr((t, e)))
 
 	  | Bind(ty, st) ->
-	    let m = add_var var_map st ty in 
-	    (m, func_map, SBind(ty, st))
+	    if ty <> Void then
+	      let m = add_var var_map st ty in 
+	      (m, func_map, SBind(ty, st))
+	    else raise (Failure ("cannot declare variable with void type"))
 	 
 	  | FuncDef(vdec, formals, body) -> (* add func def to map *)
 	  	let Bind(ty, name) = vdec

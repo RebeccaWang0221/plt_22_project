@@ -3,7 +3,7 @@
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS PEQ MEQ TEQ DEQ ASSIGN
 %token DIVIDE TIMES MOD
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
-%token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL NONE
+%token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token LIST STCT DEF RANGE
 %token RETURN BREAK CONT PASS COMMA PRINT
 %token <int> INTLIT
@@ -99,6 +99,7 @@ typ:
   | STRING  { String }
   | BOOL  { Bool }
   | CHAR  { Char }
+  | VOID  { Void }
   | LIST  { Lst }
 
 vdecl:
@@ -112,7 +113,8 @@ fdecl:
     DEF vdecl LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }
 
 fcall_args:
-    fargs_list  { $1 }
+    { [] }
+  | fargs_list  { $1 }
 
 fargs_list:
     vdecl  { $1::[] }
