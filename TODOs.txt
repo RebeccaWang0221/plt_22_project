@@ -1,0 +1,10 @@
+
+List of TODOs that need implementing:
+	- void type
+		- want to be able to define a function that returns void
+	- list, arrays, and structs
+		- need to handle in scanner, parser, and semant
+		- need to implement functionality in c++
+	- function definitions taking no parameters
+		- self-explanatory
+	
