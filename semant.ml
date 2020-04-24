@@ -12,7 +12,6 @@ let check stmts vars funcs =
 	in
 
 	let add_var map name ty =
-	  print_endline name;
 	  match name with 
 	    | _ when StringMap.mem name map -> raise (Failure ("duplicate variable names"))
 	    | _ -> StringMap.add name ty map
@@ -132,35 +131,31 @@ let check stmts vars funcs =
 	    ((t1, e1) :: fst ret, snd ret)
 	  | _ -> raise (Failure ("illegal parameter in function definition"))
  
- 	and check_func_locals var_map func_map = function
-	  | [] -> ([], var_map)
+ 	and check_func rtyp var_map func_map = function
+	  | [] -> (([], []), var_map)
 	  | Bind(t, s) as st :: tail -> 
 	    let (m, _, s) = check_stmt var_map func_map st in
 	    let (t1, e1) = match s with
 	      | SBind(t, e) -> (t, e)
 	      | _ -> raise (Failure ("invalid function local")) in
-	    let ret = check_func_locals m func_map tail in
-	    ((t1, e1) :: fst ret, snd ret)
+	    let ret = check_func rtyp m func_map tail in
+	    (((t1, e1) :: fst (fst ret), snd (fst ret)), snd ret)
 	  | DecAssign(s, e) as st :: tail -> 
 	    let (m, _, s) = check_stmt var_map func_map st in
 	    let SDecAssign(bind, _) = s in
 	    let SBind(t1, e1) = bind in
-	    let ret = check_func_locals m func_map tail in 
-	    ((t1, e1) :: fst ret, snd ret)
-	  | _ :: tail -> check_func_locals var_map func_map tail
-
-
-	and check_func_body var_map func_map rtyp = function
-	  | [] -> []
-	  | Bind(t, s) :: tail -> check_func_body var_map func_map rtyp tail
+	    let ret = check_func rtyp m func_map tail in 
+	    (((t1, e1) :: fst (fst ret), s :: snd (fst ret)), snd ret)
 	  | Return(ex) :: tail -> 
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    if t1 = rtyp then
-	      SReturn((t1, e1)) :: check_func_body var_map func_map rtyp tail
+	      let ret = check_func rtyp var_map func_map tail in
+	      ((fst (fst ret), SReturn((t1, e1)) :: snd (fst ret)), snd ret)
 	    else raise (Failure ("the returned type does not match the function definition"))
 	  | _ as st :: tail -> 
-	    let (_, _, s) = check_stmt var_map func_map st in
-	    s :: check_func_body var_map func_map rtyp tail
+	  	let (m, _, s) = check_stmt var_map func_map st in
+	  	let ret = check_func rtyp m func_map tail in 
+	  	((fst (fst ret), s :: snd (fst ret)), snd ret)
 
 	and check_stmt var_map func_map = function
 
@@ -173,9 +168,8 @@ let check stmts vars funcs =
 	  | FuncDef(vdec, formals, body) -> (* add func def to map *)
 	  	let Bind(ty, name) = vdec
 	  	and (params, m1) = check_func_params StringMap.empty func_map formals in
-	  	let (locals, m2) = check_func_locals m1 func_map body in
-	  	let body = check_func_body m2 func_map ty body
-	 	in let fdef = { srtyp=ty; sfname=name; sformals=params; slocals=locals; sbody=body } in
+	  	let ((locals, bod), m2) = check_func ty m1 func_map body in
+	 	let fdef = { srtyp=ty; sfname=name; sformals=params; slocals=locals; sbody=bod } in
 	 	let func_map' = StringMap.add name fdef func_map in
 	 	(var_map, func_map', SFuncDef(fdef))
 
