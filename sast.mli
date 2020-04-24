@@ -38,7 +38,7 @@ and sfunc_def = {
   srtyp: typ;
   sfname: string;
   sformals: (typ * string) list;
-  slocals: sstmt list;
+  slocals: (typ * string) list;
   sbody: sstmt list;
 }
 

@@ -12,6 +12,7 @@ let check stmts vars funcs =
 	in
 
 	let add_var map name ty =
+	  print_endline name;
 	  match name with 
 	    | _ when StringMap.mem name map -> raise (Failure ("duplicate variable names"))
 	    | _ -> StringMap.add name ty map
@@ -107,6 +108,8 @@ let check stmts vars funcs =
 	    if t1 = Lst && t2 = Int && t3 = Int then (var_map, func_map, (t1(* should be type Lst of typ *), SSlice(var, (t2, e2), (t3, e3))))
 		else raise (Failure ("slice indices must be of type int"))
 
+	  | _ -> raise (Failure ("invalid expression"))
+
 	in
 
 	let check_bool_expr var_map func_map ex = 
@@ -116,26 +119,26 @@ let check stmts vars funcs =
 		  | _ -> raise (Failure ("expected expression of type bool but got " ^ string_of_typ t))
 
 	in
-	(* 
-		TODO: ocamlbuild is throwing 'unbound value check_stmt' error becuase check_stmt is defined after check_func_params,
-			  check_func_locals, and check_func_body. Need to fix this (I think by using 'and' instead of 'in').
-	*)
+	
 	let rec check_func_params var_map func_map = function
 	  | [] -> ([], var_map)
 	  | Bind(t, s) as st :: tail -> 
 	    let (m, _, s) = check_stmt var_map func_map st in
-	    let SBind(t1, e1) = s in
+	    let (t1, e1) = match s with 
+	      | SBind(t, e) -> (t, e)
+	      | _ -> raise (Failure ("invalid function parameter"))
+	    in
 	    let ret = check_func_params m func_map tail in
 	    ((t1, e1) :: fst ret, snd ret)
 	  | _ -> raise (Failure ("illegal parameter in function definition"))
  
-	in
-
-	let rec check_func_locals var_map func_map = function
+ 	and check_func_locals var_map func_map = function
 	  | [] -> ([], var_map)
 	  | Bind(t, s) as st :: tail -> 
 	    let (m, _, s) = check_stmt var_map func_map st in
-	    let SBind(t1, e1) = s in
+	    let (t1, e1) = match s with
+	      | SBind(t, e) -> (t, e)
+	      | _ -> raise (Failure ("invalid function local")) in
 	    let ret = check_func_locals m func_map tail in
 	    ((t1, e1) :: fst ret, snd ret)
 	  | DecAssign(s, e) as st :: tail -> 
@@ -147,13 +150,11 @@ let check stmts vars funcs =
 	  | _ :: tail -> check_func_locals var_map func_map tail
 
 
-	in
-
-	let rec check_func_body var_map func_map rtyp = function
+	and check_func_body var_map func_map rtyp = function
 	  | [] -> []
 	  | Bind(t, s) :: tail -> check_func_body var_map func_map rtyp tail
 	  | Return(ex) :: tail -> 
-	    let (t1, e1) = check_expr var_map func_map ex in
+	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    if t1 = rtyp then
 	      SReturn((t1, e1)) :: check_func_body var_map func_map rtyp tail
 	    else raise (Failure ("the returned type does not match the function definition"))
@@ -161,21 +162,19 @@ let check stmts vars funcs =
 	    let (_, _, s) = check_stmt var_map func_map st in
 	    s :: check_func_body var_map func_map rtyp tail
 
-	in
-
-	let rec check_stmt var_map func_map = function
+	and check_stmt var_map func_map = function
 
 	  | Expr ex -> let (_, _, (t, e)) = check_expr var_map func_map ex in (var_map, func_map, SExpr((t, e)))
 
 	  | Bind(ty, st) ->
-	    let m = add_var var_map st ty in
+	    let m = add_var var_map st ty in 
 	    (m, func_map, SBind(ty, st))
 	 
 	  | FuncDef(vdec, formals, body) -> (* add func def to map *)
 	  	let Bind(ty, name) = vdec
-	  	and (params, m1) = check_func_params StringMap.empty func_map formals
-	  	and (locals, m2) = check_func_locals m1 func_map body
-	  	and body = check_func_body m2 func_map ty body
+	  	and (params, m1) = check_func_params StringMap.empty func_map formals in
+	  	let (locals, m2) = check_func_locals m1 func_map body in
+	  	let body = check_func_body m2 func_map ty body
 	 	in let fdef = { srtyp=ty; sfname=name; sformals=params; slocals=locals; sbody=body } in
 	 	let func_map' = StringMap.add name fdef func_map in
 	 	(var_map, func_map', SFuncDef(fdef))
@@ -189,18 +188,31 @@ let check stmts vars funcs =
 	  	
 	  | While(ex, st_lst) -> (var_map, func_map, SWhile(check_bool_expr var_map func_map ex, check_stmt_list var_map func_map st_lst))
 	  	
-	  | For(st1, ex, st2_lst) -> (* TODO: have to check types match in cases like: for int x in [1,2,3] - for char c in "hello" *)
-	    (var_map, func_map, SFor())
+	  | For(st1, ex, st2_lst) -> (* TODO: once Lst/Array is implemented, have to check types of Lst elements rather than just checking for Lst *)
+	    let (m, _, s) = check_stmt var_map func_map st1 in
+	    let (t1, e1) = match s with
+	      | SBind(t, e) -> (t, e)
+	      | _ -> raise (Failure ("invalid variable declaration in for loop"))
+	    and body = check_stmt_list m func_map st2_lst 
+	    and (_, _, (t2, e2)) = check_expr m func_map ex in
+	    let ret = match t1 with
+	      | Int when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
+	      | Float when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
+	      | Char when t2 = Lst || t2 = String -> (m, func_map, SFor(s, (t2, e2), body))
+	      | Bool when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
+	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1))
+	    in ret
+
 	  | Range(st1, ex, st2_lst) ->
 	  	let (m1, _, s1) = check_stmt var_map func_map st1 in
 	  	let SBind(t1, e1) = s1 
-	  	and (m2, _, (t2, e2)) = check_expr m1 func_map ex 
-	    and sst_lst = check_stmt_list m func_map st2_lst in
+	  	and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
+	    let sst_lst = check_stmt_list m2 func_map st2_lst in
 	  	if t1 = t2 then
 	  	  match t1 with
 	  	    | _ when (t1 = Int && t2 = Int) -> (m2, func_map, SRange(s1, (t2, e2), sst_lst))
 	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
-	  	else raise Failure("for-range loop must be used with int types but given types do not match")
+	  	else raise (Failure("for-range loop must be used with int types but given types do not match"))
 
 	  | Do(st_lst, ex) -> (var_map, func_map, SDo(check_stmt_list var_map func_map st_lst, check_bool_expr var_map func_map ex))
 	  	
@@ -208,8 +220,8 @@ let check stmts vars funcs =
 	  	raise (Failure ("return must belong to a function definition"))
 	  	
 	  | Assign(ex1, ex2) -> 
-	  	let (m1, _, (t1, e1)) = check_expr var_map func_map ex1
-	  	and (m2, _, (t2, e2)) = check_expr m1 func_map ex2 in
+	  	let (m1, _, (t1, e1)) = check_expr var_map func_map ex1 in
+	  	let (m2, _, (t2, e2)) = check_expr m1 func_map ex2 in
 	  	let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2 
 	  	in
 	  	if t1 = t2 then (m2, func_map, SAssign((t1, e1), (t2, e2)))
@@ -224,17 +236,20 @@ let check stmts vars funcs =
 		if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 		else raise (Failure err)
 
-	  | Struct(s, st_lst) -> (* TODO: ??? not sure what to do here *)
-	  	(var_map, func_map, SStruct())
+	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
+	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in
+	  	let var_map' = add_var var_map s Stct in
+	  	(var_map', func_map, SStruct(s, sst_lst))
+
 	  | Cont -> (var_map, func_map, SCont)
 
 	  | Break -> (var_map, func_map, SBreak)
 
 	  | Pass -> (var_map, func_map, SPass)
 
-	in
+	  | _ -> raise (Failure ("invalid statement"))
 
-	let rec check_stmt_list var_map func_map = function 
+	and check_stmt_list var_map func_map = function 
 	  | [] -> []
 	  | s :: sl -> 
 	    let (var_map', func_map', st) = check_stmt var_map func_map s in
