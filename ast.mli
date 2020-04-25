@@ -1,6 +1,6 @@
-type op = Add | Sub | Mult | Div | Mod | Eq | Neq | And | Or | Lt | Gt | Lte | Gte 
+type op = Add | Sub | Mult | Div | Mod | Exp | Eq | Neq | And | Or | Lt | Gt | Lte | Gte 
 
-type un = Inc | Dec | Not
+type un = Not
 
 (* expressions *)
 type expr = 

@@ -46,6 +46,7 @@ let check stmts vars funcs =
 	  	  let t = match op with
 	  	    | Add | Sub when t1 = Int -> Int
 	  	    | Add | Sub when t1 = Float -> Float
+	  	    | Add when t1 = String -> String
 	  	    | Mult when t1 = Int -> Int
 	  	    | Mult when t1 = Float -> Float
 	  	    | Div -> Float
@@ -67,7 +68,6 @@ let check stmts vars funcs =
 	  | Unop(var, un) -> (* check to ensure var is an id *)
 	  	let ty = type_of_var var_map var in
 	  	let t = match un with
-	  	  | Inc | Dec when ty = Int -> Int
 	  	  | Not when ty = Bool -> Bool
 	  	  | _ -> raise (Failure ("illegal unary operator on type "  ^ string_of_typ ty))
 	  	in
@@ -220,7 +220,10 @@ let check stmts vars funcs =
 	  	let (m2, _, (t2, e2)) = check_expr m1 func_map ex2 in
 	  	let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2 
 	  	in
-	  	if t1 = t2 then (m2, func_map, SAssign((t1, e1), (t2, e2)))
+	  	if t1 = t2 then 
+	  	  match e1 with 
+	  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+	  	    | _ -> raise (Failure ("cannot assign to anything other than a variable"))
 	  	else raise (Failure err)
 
 	  | DecAssign(st, ex) -> 
