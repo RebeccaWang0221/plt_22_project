@@ -1,7 +1,7 @@
 %{ open Ast %}
 
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS PEQ MEQ TEQ DEQ ASSIGN
-%token DIVIDE TIMES MOD
+%token DIVIDE TIMES MOD 
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token LIST STCT DEF RANGE
@@ -51,6 +51,8 @@ stmt:
   | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
   | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
   | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
+  | expr INC SEMI  { Assign($1, Binop($1, Add, IntLit(1))) }
+  | expr DEC SEMI  { Assign($1, Binop($1, Sub, IntLit(1))) }
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
@@ -84,8 +86,6 @@ expr:
   | expr GTE expr  { Binop($1, Gte, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
-  | ID INC  { Unop($1, Inc) }
-  | ID DEC  { Unop($1, Dec) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
