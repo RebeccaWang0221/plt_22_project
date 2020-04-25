@@ -41,7 +41,7 @@ let translate stmts =
       | SStrLit s -> L.build_global_stringptr s "string" builder
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | SFloatLit i -> L.const_float float_t i
-      | SCharLit c ->
+      | SCharLit c -> L.const_int i8_t (Char.code c)
       | SId s -> L.build_load (lookup s) s builder
       | SBinop(e1, op, e2) -> 
       	  match t with
@@ -66,11 +66,19 @@ let translate stmts =
         	  and e2' = build_expr builder e2 in
         	  (match op with
           		| A.Add -> raise (Failure ("string concatenation not yet implemented"))
-          		| A.Eq -> (* TODO *)
-          		| A.Neq -> (* TODO *)
+          		| A.Eq -> L.build_icmp L.Icmp.Eq
+          		| A.Neq -> L.build_icmp L.Icmp.Ne
           		| _ -> raise (Failure ("invalid operation on type string"))
-        	  ) (* TODO: return *)
-        	| A.Bool -> (* TODO *)
+        	  ) e1' e1' "tmp" builder
+        	| A.Bool -> 
+        	  let e1' = build_expr builder e1
+        	  and e2' = build_expr builder e2 in
+        	  (match op with
+        	    | A.Eq -> L.build_icmp L.Icmp.Eq
+        	    | A.Neq -> L.build_icmp L.Icmp.Ne
+        	    | A.And -> L.build_and 
+        	    | A.Or -> L.build_or
+        	  ) e1' e2' "tmp" builder
         	| A.Int -> 
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -87,7 +95,12 @@ let translate stmts =
 	            | A.Lte -> L.build_icmp L.Icmp.Sle
 	            | A.Gte -> L.build_icmp L.Icmp.Sge
        		  ) e1' e2' "tmp" builder
-      | SUnop(id, unop) -> (* TODO *)
+      | SUnop(id, unop) -> 
+        let e' = build_expr builder e in
+        (match unop with 
+          | A.Not -> L.build_not 
+          | _ -> raise (Failure ("invalid unary operator"))
+        ) e' "tmp" builder
       | SPrint(e) -> (* TODO *)
       | SCall(func, args) -> (* TODO *)
       | SAccess(id, e) -> (* TODO *)
