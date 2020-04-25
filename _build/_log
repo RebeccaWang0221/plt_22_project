@@ -1,0 +1,12 @@
+### Starting build.
+# Target: rattle.ml.depends, tags: { extension:ml, file:rattle.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules rattle.ml > rattle.ml.depends # cached
+# Target: irgen.ml.depends, tags: { extension:ml, file:irgen.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules irgen.ml > irgen.ml.depends
++ ocamldep.opt -modules irgen.ml > irgen.ml.depends
+File "irgen.ml", line 189, characters 2-4:
+189 |   in
+        ^^
+Error: Syntax error
+Command exited with code 2.
+# Compilation unsuccessful.
