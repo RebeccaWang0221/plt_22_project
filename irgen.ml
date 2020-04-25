@@ -28,11 +28,11 @@ let translate stmts =
   in
 
   let global_vars : L.llvalue StringMap.t =
-
+    (* TODO *)
   in
 
   let function_decls : (L.llvalue * sfunc_def) StringMap.t =
-
+    (* TODO *)
   in
 
   let rec build_expr builder ((t, e) : sexpr) =
