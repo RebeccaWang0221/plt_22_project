@@ -46,6 +46,7 @@ let check stmts vars funcs =
 	  	  let t = match op with
 	  	    | Add | Sub when t1 = Int -> Int
 	  	    | Add | Sub when t1 = Float -> Float
+	  	    | Add when t1 = String -> String
 	  	    | Mult when t1 = Int -> Int
 	  	    | Mult when t1 = Float -> Float
 	  	    | Div -> Float
