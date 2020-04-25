@@ -84,8 +84,8 @@ expr:
   | expr GTE expr  { Binop($1, Gte, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
-  | ID INC  { Unop($1, Inc) }
-  | ID DEC  { Unop($1, Dec) }
+  | ID INC  { Assign($1, Binop($1, Add, IntLit(1))) }
+  | ID DEC  { Assign($1, Binop($1, Sub, IntLit(1))) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
