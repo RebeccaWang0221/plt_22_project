@@ -57,6 +57,7 @@ stmt:
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
   | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) } 
+  | PRINT LPAREN expr RPAREN SEMI  { Print($3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
   | PASS SEMI  { Pass }
@@ -89,7 +90,6 @@ expr:
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
-  | PRINT LPAREN expr RPAREN  { Print($3) }
   | ID LBRACK expr RBRACK  { Access($1, $3) }
   | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 

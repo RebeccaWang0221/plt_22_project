@@ -6,3 +6,5 @@ List of TODOs that need implementing:
 	- implement ** (exponent) operator in parser
 		- keeps reporting shift/reduce conflicts for some reason
 	- irgen stage
+		- fill in TODOs
+		- need to initialize builder object

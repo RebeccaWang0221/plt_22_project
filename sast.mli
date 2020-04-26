@@ -12,7 +12,6 @@ and sx =
   | SBinop of sexpr * op * sexpr 
   | SUnop of string * un
   | SCall of string * sexpr list
-  | SPrint of sexpr
   | SAccess of string * sexpr
   | SSlice of string * sexpr * sexpr
 
@@ -31,6 +30,7 @@ type sstmt =
   | SAssign of sexpr * sexpr
   | SDecAssign of sstmt * sexpr
   | SStruct of string * sstmt list
+  | SPrint of sexpr
   | SCont 
   | SBreak
   | SPass

@@ -15,7 +15,6 @@ type expr =
   | Binop of expr * op * expr 
   | Unop of string * un
   | Call of string * expr list
-  | Print of expr
   | Access of string * expr
   | Slice of string * expr * expr
 
@@ -38,6 +37,7 @@ type stmt =
   | DecAssign of stmt * expr
   | DecArr of stmt * expr list
   | Struct of string * stmt list
+  | Print of expr
   | Cont 
   | Break
   | Pass
