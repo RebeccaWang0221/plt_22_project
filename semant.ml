@@ -85,14 +85,6 @@ let check stmts vars funcs =
 	  	in
 	  	let args' = List.map2 check_call fd.sformals args in
 	  	(var_map, func_map, (fd.srtyp, SCall(fname, args')))
-	  	
-	  | Print ex -> (* ensure ex is valid for print *)
-	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
-	    let t = match t1 with
-	      | Int | Float | Bool | String | Char | Lst -> t1
-	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
-	    in
-	    (var_map, func_map, (t, SPrint(t1, e1)))
 
 	  | Access(var, ex) -> (* ensure var is of list or array type and ex results in an int *)
 	    let t1 = type_of_var var_map var
@@ -152,6 +144,30 @@ let check stmts vars funcs =
 	      let ret = check_func rtyp var_map func_map tail in
 	      ((fst (fst ret), SReturn((t1, e1)) :: snd (fst ret)), snd ret)
 	    else raise (Failure ("the returned type does not match the function definition"))
+	  | If(ex, st1_lst, st2_lst) :: tail -> 
+	    let (t, e) = check_bool_expr var_map func_map ex in
+	    let rec check_lst = function 
+	      | [] -> []
+	      | Return(e) :: tail -> 
+	        let (_, _, (t1, e1)) = check_expr var_map func_map e in
+	        if t1 = rtyp then
+	          SReturn((t1, e1)) :: check_lst tail
+	        else raise (Failure ("the returned type does not match the function definition"))
+	      | Elif(e, st_lst) :: tail -> 
+	        let (t1, e1) = check_bool_expr var_map func_map e in
+	        let sst_lst = check_lst st_lst in 
+	        SElif((t1, e1), sst_lst) :: check_lst tail
+	      | Else(st_lst) :: tail ->
+	        let sst_lst = check_lst st_lst in 
+	        SElse(sst_lst) :: check_lst tail
+	      | _ as st :: tail -> 
+	        let (_, _, s) = check_stmt var_map func_map st in
+	        s :: check_lst tail
+	    in
+	    let sst_lst1 = check_lst st1_lst 
+	    and sst_lst2 = check_lst st2_lst in
+	    let ret = check_func rtyp var_map func_map tail in 
+	    ((fst (fst ret), SIf((t, e), sst_lst1, sst_lst2) :: snd (fst ret)), snd ret)
 	  | _ as st :: tail -> 
 	  	let (m, _, s) = check_stmt var_map func_map st in
 	  	let ret = check_func rtyp m func_map tail in 
@@ -239,6 +255,14 @@ let check stmts vars funcs =
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in
 	  	let var_map' = add_var var_map s Stct in
 	  	(var_map', func_map, SStruct(s, sst_lst))
+
+	  | Print ex -> (* ensure ex is valid for print *)
+	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
+	    let t = match t1 with
+	      | Int | Float | Bool | String | Char | Lst -> t1
+	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
+	    in
+	    (var_map, func_map, SPrint((t1, e1)))
 
 	  | Cont -> (var_map, func_map, SCont)
 
