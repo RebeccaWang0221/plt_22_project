@@ -8,6 +8,7 @@ let translate stmts =
   (* create the LLVM compilation module to which we will generate the code *)
   let context = L.global_context () in
   let the_module = L.create_module context "RattleSnake" in
+  (* TODO: have to initialize builder *)
 
   (* get types from context *)
   let i32_t      = L.i32_type    context
@@ -43,8 +44,8 @@ let translate stmts =
       | SFloatLit i -> L.const_float float_t i
       | SCharLit c -> L.const_int i8_t (Char.code c)
       | SId s -> L.build_load (lookup s) s builder
-      | SBinop(e1, op, e2) -> 
-      	  match t with
+      | SBinop(e1, op, e2) -> (* TODO: going to need to handle case when adding different types, e.g. 2 + 5.5 *)
+      	  match t with		  (* LLVM will throw an error when types do not match *)
       	    | A.Float ->
       	      let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -60,7 +61,7 @@ let translate stmts =
 	            | A.Gt -> L.build_fcmp L.Fcmp.Ogt
 	            | A.Lte -> L.build_fcmp L.Fcmp.Ole
 	            | A.Gte -> L.build_fcmp L.Fcmp.Oge
-       		  ) e1' e2' "tmp" builder
+       		  ) e1' e2' "float_binop" builder
       	    | A.String ->
       	      let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -69,7 +70,7 @@ let translate stmts =
           		| A.Eq -> L.build_icmp L.Icmp.Eq
           		| A.Neq -> L.build_icmp L.Icmp.Ne
           		| _ -> raise (Failure ("invalid operation on type string"))
-        	  ) e1' e1' "tmp" builder
+        	  ) e1' e1' "string_binop" builder
         	| A.Bool -> 
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -78,7 +79,7 @@ let translate stmts =
         	    | A.Neq -> L.build_icmp L.Icmp.Ne
         	    | A.And -> L.build_and 
         	    | A.Or -> L.build_or
-        	  ) e1' e2' "tmp" builder
+        	  ) e1' e2' "bool_binop" builder
         	| A.Int -> 
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -94,13 +95,13 @@ let translate stmts =
 	            | A.Gt -> L.build_icmp L.Icmp.Sgt
 	            | A.Lte -> L.build_icmp L.Icmp.Sle
 	            | A.Gte -> L.build_icmp L.Icmp.Sge
-       		  ) e1' e2' "tmp" builder
+       		  ) e1' e2' "int_binop" builder
       | SUnop(id, unop) -> 
         let e' = build_expr builder e in
         (match unop with 
           | A.Not -> L.build_not 
           | _ -> raise (Failure ("invalid unary operator"))
-        ) e' "tmp" builder
+        ) e' "unop" builder
       | SPrint(e) -> (* TODO *)
       | SCall(func, args) -> (* TODO *)
       | SAccess(id, e) -> (* TODO *)
@@ -113,7 +114,7 @@ let translate stmts =
 
   in 
 
-  let rec build_stmt st =
+  let rec build_stmt builder st =
     match st with
       | SExpr(e) -> (* TODO *)
       | SBind(ty, id) -> (* TODO *)
