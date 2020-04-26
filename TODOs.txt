@@ -6,3 +6,10 @@ List of TODOs that need implementing:
 	- implement ** (exponent) operator in parser
 		- keeps reporting shift/reduce conflicts for some reason
 	- irgen stage
+	- fix bug where error is raised if there is a return in an if statement inside of a function definition
+		e.g. def int foo(int x) {
+			     if x < 5 {
+			         return x;
+			     }
+			     return 1;
+			 }
