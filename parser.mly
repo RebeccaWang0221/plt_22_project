@@ -11,7 +11,6 @@
 %token <bool> BLIT
 %token <string> STRLIT
 %token <string> ID
-%token <string> LSTLIT
 %token EOF
 
 %start program

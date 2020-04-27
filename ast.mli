@@ -9,7 +9,6 @@ type expr =
   | BoolLit of bool 
   | FloatLit of float 
   | CharLit of char 
-  | LstLit of expr list 
   | ArrayLit of expr list
   | Id of string 
   | Binop of expr * op * expr 
