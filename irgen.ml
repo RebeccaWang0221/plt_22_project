@@ -9,8 +9,7 @@ let translate stmts =
   let context = L.global_context () in
   let the_module = L.create_module context "RattleSnake" in 
   let builder = L.builder context
-  and global_var_map = StringMap.empty
-  and func_map = StringMap.empty in
+  and var_map = Hashtbl.create 30 in
 
   (* get types from context *)
   let i32_t      = L.i32_type    context
@@ -42,9 +41,9 @@ let translate stmts =
       	  match t with		  (* LLVM will throw an error when types do not match *)
       	    | A.Float ->
       	      let e1' = build_expr builder e1
-        	  and e2' = build_expr builder e2 in
+        	    and e2' = build_expr builder e2 in
         	  (match op with
-          	    | A.Add -> L.build_fadd
+          	  | A.Add -> L.build_fadd
           		| A.Sub -> L.build_fsub
           		| A.Div -> L.build_fdiv
           		| A.Mult-> L.build_fmul
@@ -58,7 +57,7 @@ let translate stmts =
        		  ) e1' e2' "float_binop" builder
       	    | A.String ->
       	      let e1' = build_expr builder e1
-        	  and e2' = build_expr builder e2 in
+        	    and e2' = build_expr builder e2 in
         	  (match op with
           		| A.Add -> raise (Failure ("string concatenation not yet implemented"))
           		| A.Eq -> L.build_icmp L.Icmp.Eq
@@ -96,22 +95,48 @@ let translate stmts =
           | A.Not -> L.build_not 
           | _ -> raise (Failure ("invalid unary operator"))
         ) e' "unop" builder
-      | SCall(func, args) -> (* TODO *)
+      | SCall(name, args) ->
+        let callee =
+          match L.lookup_function name the_module with
+            | Some c -> c
+            | None -> raise (Failure ("unknown function referenced")) 
+        in
+        let params = L.params callee 
+        and args_arr = Array.of_list args in
+        if Array.length params <> Array.length args_arr then 
+          raise (Failure ("incorrect # of arguments passed"))
+        else let args1 = Array.map build_expr args in (* not sure if this map call will work bcz build_expr needs builder as argument *)
+        build_call callee args1 "call_func" builder 
       | SAccess(id, e) -> (* TODO *)
       | SSlice(id, e1, e1) -> (* TODO *)
         
   in
-
-  let build_func_body fdecl =
-  	(* TODO *)
-
-  in 
 
   let rec build_stmt builder st =
     match st with
       | SExpr(e) -> ignore(build_expr builder e); builder
       | SBind(ty, id) -> (* TODO *)
   	  | SFuncDef(func_def) -> (* TODO *)
+        let name = func_def.sfname in
+        let param_arr = Array.of_list func_def.sformals in
+        let params = (* TODO: Need to get L.llvalue for each element in param_arr and save in params Array *)
+        let ft = L.function_type func_def.srtyp params in (* define function type of return type and parameters *)
+        let f = (* declare the function in the module *)
+          match L.lookup_function name the_module with
+            | None -> L.declare_function name ft the_module
+            | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
+        in
+        Array.iteri (fun i a -> (* add parameters to var_map *)
+          let n = snd param_arr.(i) in
+          L.set_value_name n a;
+          Hashtbl.add var_map n a;
+        ) (L.params f);
+        let bb = L.append_block context "entry" f in (* create entry point block for function *)
+        L.position_at_end bb builder;
+        (* 
+          TODO: need to recursively generate code for the each stmt in the body, and use build_ret or build_ret_void for 
+          return stmts, then call Llvm_analysis.assert_valid_function to check for bugs, finally return the created function
+        *)
   	  | SIf(e, body, dstmts) -> (* TODO *)
         let cond = build_expr builder e in
         let start_bb = insertion_block builder in
