@@ -4,14 +4,13 @@
 %token DIVIDE TIMES MOD 
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
-%token LIST STCT DEF RANGE
-%token RETURN BREAK CONT PASS COMMA PRINT
+%token ARRAY LIST STCT DEF RANGE
+%token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
 %token <float> FLOATLIT
 %token <bool> BLIT
 %token <string> STRLIT
 %token <string> ID
-%token <string> ARRAY
 %token <string> LSTLIT
 %token EOF
 
@@ -41,7 +40,8 @@ stmt:
     expr SEMI  { Expr $1 }
   | vdecl SEMI  { $1 }
   | fdecl  { $1 }
-/*  | array_decl SEMI { $1 } */
+  | array_decl  { $1 } 
+  | list_decl  { $1 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
   | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $9) }
@@ -72,7 +72,6 @@ expr:
   | INTLIT  { IntLit($1) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
-  /*| LSTLIT { LstLit($1) }*/
   | ID  { Id($1) }
   | expr PLUS expr  { Binop($1, Add, $3) }
   | expr MINUS expr  { Binop($1, Sub, $3) }
@@ -100,7 +99,6 @@ typ:
   | BOOL  { Bool }
   | CHAR  { Char }
   | VOID  { Void }
-  | LIST  { Lst }
 
 vdecl:
     typ ID  { Bind($1, $2) }
@@ -127,11 +125,15 @@ args_opt:
 args: 
     expr  { $1::[] }
   | expr COMMA args  { $1::$3 }
-/* TODO: fix array shift/reduce conflict 
+
 array_decl:
-    typ ID ASSIGN LBRACE args_opt RBRACE  { DecArr(Bind(Array($1, IntLit(List.length $5)), $2), $5) }
-  | typ ID LBRACK expr RBRACK { Bind(Array($1, $4), $2) }
-*/
+    ARRAY LT typ GT ID LBRACK expr RBRACK SEMI  { Bind(Array($3, $7), $5) }
+
+list_decl:
+    LIST LT typ GT ID SEMI  { Bind(List($3), $5) }
+
+
+
 
 
 
