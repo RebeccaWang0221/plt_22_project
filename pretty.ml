@@ -15,14 +15,15 @@ let string_of_op = function
   | And -> "and"
   | Or -> "or"
 
-let string_of_typ = function
+let rec string_of_typ = function
     Int -> "int"
   | Char -> "char"
   | String -> "string"
   | Float -> "float"
-  | Lst -> "list"
   | Stct -> "struct"
   | Bool -> "bool"
+  | List(ty) -> "list<" ^ string_of_typ ty ^ ">"
+  | Array(ty, sz) -> "array<" ^ string_of_typ ty ^ ">"
 
 
 

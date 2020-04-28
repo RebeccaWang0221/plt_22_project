@@ -34,8 +34,6 @@ let check stmts vars funcs =
 
 	  | CharLit l -> (var_map, func_map, (Char, SCharLit l))
 
-	  | LstLit l -> (var_map, func_map, (Lst, SLstLit l)) (* TODO: have to fix the list literal - ex: [1,2,3] *)
-
 	  | Id var -> (var_map, func_map, (type_of_var var_map var, SId var))
 
 	  | Binop(ex1, op, ex2) -> (* check ex1 and ex2 recursively *)
@@ -89,15 +87,23 @@ let check stmts vars funcs =
 	  | Access(var, ex) -> (* ensure var is of list or array type and ex results in an int *)
 	    let t1 = type_of_var var_map var
 	    and (_, _, (t2, e2)) = check_expr var_map func_map ex in
-	    if t1 = Lst && t2 = Int then (var_map, func_map, (t1(* should return type of list elems, not Lst *), SAccess(var, (t2, e2))))
+	    if t2 = Int then
+	      match t1 with
+	        | List(ty) -> (var_map, func_map, (ty, SAccess(var, (t2, e2))))
+	        | Array(ty, e) -> (var_map, func_map, (ty, SAccess(var, (t2, e2))))
+	        | _ -> raise (Failure ("invalid access on non list/array type"))
 		else raise (Failure ("list/array access index must be of type int"))
 
 	  | Slice(var, ex1, ex2) -> (* ensure var is of list or array type and ex1 and ex2 result in int *)
 	    let t1 = type_of_var var_map var
 	    and (_, _, (t2, e2)) = check_expr var_map func_map ex1
 	    and (_, _, (t3, e3)) = check_expr var_map func_map ex2 in
-	    if t1 = Lst && t2 = Int && t3 = Int then (var_map, func_map, (t1(* should be type Lst of typ *), SSlice(var, (t2, e2), (t3, e3))))
-		else raise (Failure ("slice indices must be of type int"))
+	    if (t2 = Int && t3 = Int) then
+	      match t1 with
+	        | List(ty) -> (var_map, func_map, (t1, (SSlice(var, (t2, e2), (t3, e3)))))
+	        | Array(ty, e) -> (var_map, func_map, (t1, (SSlice(var, (t2, e2), (t3, e3)))))
+	        | _ -> raise (Failure ("invalid slice on non list/array type"))
+	    else raise (Failure ("list/array slice indices must be of type int"))
 
 	  | _ -> raise (Failure ("invalid expression"))
 
@@ -200,7 +206,7 @@ let check stmts vars funcs =
 	  	
 	  | While(ex, st_lst) -> (var_map, func_map, SWhile(check_bool_expr var_map func_map ex, check_stmt_list var_map func_map st_lst))
 	  	
-	  | For(st1, ex, st2_lst) -> (* TODO: once Lst/Array is implemented, have to check types of Lst elements rather than just checking for Lst *)
+	  | For(st1, ex, st2_lst) -> (* check types of List elements rather than just checking for List *)
 	    let (m, _, s) = check_stmt var_map func_map st1 in
 	    let (t1, e1) = match s with
 	      | SBind(t, e) -> (t, e)
@@ -208,11 +214,33 @@ let check stmts vars funcs =
 	    and body = check_stmt_list m func_map st2_lst 
 	    and (_, _, (t2, e2)) = check_expr m func_map ex in
 	    let ret = match t1 with
-	      | Int when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
-	      | Float when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
-	      | Char when t2 = Lst || t2 = String -> (m, func_map, SFor(s, (t2, e2), body))
-	      | Bool when t2 = Lst -> (m, func_map, SFor(s, (t2, e2), body))
-	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1))
+	      | Int -> 
+	        (match t2 with
+	          | List(ty) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
+	          | Array(ty, e) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
+	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
+	      | Float ->
+	        (match t2 with
+	          | List(ty) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
+	          | Array(ty, e) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
+	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
+	      | Char ->
+	        (match t2 with
+	          | List(ty) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
+	          | Array(ty, e) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
+	          | String -> (m, func_map, SFor(s, (t2, e2), body))
+	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
+	      | Bool ->
+	        (match t2 with
+	          | List(ty) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
+	          | Array(ty, e) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
+	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
+	      | String ->
+	        (match t2 with
+	          | List(ty) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
+	          | Array(ty, e) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
+	          | _ -> raise (Failure ("types of iterator variable and object elements do not match"))
+	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1)))
 	    in ret
 
 	  | Range(st1, ex, st2_lst) ->
@@ -259,7 +287,7 @@ let check stmts vars funcs =
 	  | Print ex -> (* ensure ex is valid for print *)
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    let t = match t1 with
-	      | Int | Float | Bool | String | Char | Lst -> t1
+	      | Int | Float | Bool | String | Char -> t1
 	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
 	    in
 	    (var_map, func_map, SPrint((t1, e1)))

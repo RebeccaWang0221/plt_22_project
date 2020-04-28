@@ -9,7 +9,6 @@ type expr =
   | BoolLit of bool 
   | FloatLit of float 
   | CharLit of char 
-  | LstLit of expr list 
   | ArrayLit of expr list
   | Id of string 
   | Binop of expr * op * expr 
@@ -18,7 +17,7 @@ type expr =
   | Access of string * expr
   | Slice of string * expr * expr
 
-type typ = Int | String | Bool | Float | Char | Lst | Stct | Void | Array of typ * expr
+type typ = Int | String | Bool | Float | Char | List of typ | Stct | Void | Array of typ * expr
 
 (* statements *)
 type stmt = 

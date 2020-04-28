@@ -2,7 +2,6 @@
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
-(* let arr = "array<"("int" | "char" | "float" | "bool" | "string")">" *)
 
 rule token = parse 
     [' ' '\t' '\r' '\n']  { token lexbuf }
@@ -38,6 +37,7 @@ rule token = parse
   | "and"  { AND }
   | "or"  { OR }
   | ("not" | "!")  { NOT }  
+  | "."  { DOT }
   | "if"  { IF }
   | "else"  { ELSE }
   | "elif"  { ELIF }
@@ -62,7 +62,8 @@ rule token = parse
   | "struct"  { STCT } 
   | "def"  { DEF }
   | "print"  { PRINT }
-(*| arr as ty  { ARRAY(ty) } *)
+  | "array"  { ARRAY }
+  | "list"  { LIST }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
   | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
