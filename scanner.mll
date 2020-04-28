@@ -19,7 +19,7 @@ rule token = parse
   | "-"  { MINUS }
   | "/"  { DIVIDE }
   | "*"  { TIMES }
-  | "**"  { EXP }  
+  | "*""*"  { EXP }
   | "++"  { INC }  
   | "--"  { DEC }  
   | "%"  { MOD }
