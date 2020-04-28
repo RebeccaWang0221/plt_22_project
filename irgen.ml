@@ -28,7 +28,13 @@ let translate stmts =
     | A.String -> string_t
     | A.Char -> i8_t
     | A.Void -> void_t
-  in
+	in
+	
+	let add_terminal builder instr =
+      match L.block_terminator (L.insertion_block builder) with
+        Some _ -> ()
+			| None -> ignore (instr builder) in 
+			
 
   let rec build_expr builder ((t, e) : sexpr) =
     match e with
@@ -121,7 +127,18 @@ let translate stmts =
         (* TODO: finish rest of SIf - copied from Kaleidoscope tutorial but cannot figure out *)
   	  | SElif(e, body) -> (* TODO *)
   	  | SElse(body) -> (* TODO *)
-  	  | SWhile(e, body) -> (* TODO *)
+			| SWhile(e, body) -> (* TODO *)
+				let pred_bb = L.append_block context "while" the_function in
+        let body_bb = L.append_block context "while_body" the_function in
+        let merge_bb = L.append_block context "merge" the_function in
+        let _ = L.build_br pred_bb builder in
+        let _ = break_block := L.value_of_block merge_bb in
+        let _ = continue_block := L.value_of_block pred_bb in
+        let pred_builder = L.builder_at_end context pred_bb in
+        let bool_val = build_expr pred_builder e in
+        let _ = L.build_cond_br bool_val body_bb merge_bb pred_builder in
+          add_terminal (build_stmt (L.builder_at_end context body_bb) body) (L.build_br pred_bb);
+          L.builder_at_end context merge_bb
   	  | SFor(var, e, body) -> (* TODO *)
   	  | SRange(var, e, body) -> (* TODO *)
   	  | SDo(body, e) -> (* TODO *)
@@ -130,8 +147,8 @@ let translate stmts =
   	  | SDecAssign(s, e) -> (* TODO *)
   	  | SStruct(id, body) -> (* TODO *)
       | SPrint(e) -> (* TODO *)
-  	  | SCont -> (* TODO *)
-  	  | SBreak -> (* TODO *)
+  	  | SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
+  	  | SBreak -> ignore(L.build_br (L.block_of_value !break_block) builder); builder
   	  | SPass -> (* TODO *)
 
   in 
