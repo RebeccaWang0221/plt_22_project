@@ -2,9 +2,6 @@
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
-let str = '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"'
-let flt = digit*'.'digit+ 
-let id = letter (digit | letter | '_')*
 
 rule token = parse 
     [' ' '\t' '\r' '\n']  { token lexbuf }
@@ -13,8 +10,8 @@ rule token = parse
   | ")"  { RPAREN }
   | "{"  { LBRACE }
   | "}"	  { RBRACE }
-  | "["  { RBRACK }
-  | "]"   { LBRACK }
+  | "["  { LBRACK }
+  | "]"   { RBRACK }
   | ";"  { SEMI }
   | ":"  { COLON }
   | ","  { COMMA }
@@ -40,6 +37,7 @@ rule token = parse
   | "and"  { AND }
   | "or"  { OR }
   | ("not" | "!")  { NOT }  
+  | "."  { DOT }
   | "if"  { IF }
   | "else"  { ELSE }
   | "elif"  { ELIF }
@@ -57,18 +55,18 @@ rule token = parse
   | "float"  { FLOAT }
   | "string"  { STRING }
   | "bool"  { BOOL }
-  | "none"  { NONE }
+  | "void"  { VOID }
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
   | "list"  { LIST }  
-  | "struct"  { STCT }  (* TODO: structs *)
+  | "struct"  { STCT } 
   | "def"  { DEF }
   | "print"  { PRINT }
+  | "array"  { ARRAY }
+  | "list"  { LIST }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
-  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) }
-  (* | "[.*]" as lem  { LSTLIT(lem) }   (* TODO: fix this regex *) *)
-  | "["((id (","" "*'\t'*'\n'*id)*)? | (digit+(','' '*'\t'*'\n'*digit+))? | (str(','' '*'\t'*'\n'*str)*)? | (flt(','' '*'\t'*'\n'*flt)*)?)"]" as lem { LSTLIT(lem) }
+  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
