@@ -29,6 +29,13 @@ let translate stmts =
     | A.Void -> void_t
   in
 
+  let add_terminal builder instr =
+      match L.block_terminator (L.insertion_block builder) with
+        Some _ -> ()
+			| None -> ignore (instr builder) in
+
+  in
+
   let lookup s = Hashtbl.find var_map s (* TODO: need to check for local varables AND global variables *)
 
   in
@@ -110,7 +117,7 @@ let translate stmts =
         if Array.length params <> Array.length args_arr then
           raise (Failure ("incorrect # of arguments passed"))
         else let args1 = Array.map build_expr args in (* not sure if this map call will work bcz build_expr needs builder as argument *)
-        build_call callee args1 "call_func" builder
+        L.build_call callee args1 "call_func" builder
       | SAccess(id, e) -> (* TODO *)
       | SSlice(id, e1, e1) -> (* TODO *)
 
@@ -151,7 +158,18 @@ let translate stmts =
         (* TODO: finish rest of SIf - copied from Kaleidoscope tutorial but cannot figure out *)
   	| SElif(e, body) -> (* TODO *)
   	| SElse(body) -> (* TODO *)
-  	| SWhile(e, body) -> (* TODO *)
+  	| SWhile(e, body) -> (* TODO: the_function is not defined, need to either define or figure out diff way *)
+      let while_bb = L.append_block context "while" the_function in
+      let body_bb = L.append_block context "while_body" the_function in
+      let merge_bb = L.append_block context "merge" the_function in
+      let _ = L.build_br while_bb builder in
+      let _ = break_block := L.value_of_block merge_bb in
+      let _ = continue_block := L.value_of_block while_bb in
+      let while_builder = L.builder_at_end context while_bb in
+      let bool_val = build_expr while_builder e in
+      let _ = L.build_cond_br bool_val body_bb merge_bb while_builder in
+      add_terminal (build_stmt (L.builder_at_end context body_bb) body) (L.build_br while_bb);
+      L.builder_at_end context merge_bb
   	| SFor(var, e, body) -> (* TODO *)
   	| SRange(var, e, body) -> (* TODO *)
   	| SDo(body, e) -> (* TODO *)
@@ -162,8 +180,8 @@ let translate stmts =
   	| SDecAssign(s, e) -> (* TODO *)
   	| SStruct(id, body) -> (* TODO *)
     | SPrint(e) -> (* TODO *)
-  	| SCont -> (* TODO *)
-  	| SBreak -> (* TODO *)
+  	| SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
+  	| SBreak -> ignore(L.build_br (L.block_of_value !break_block) builder); builder
   	| SPass -> (* TODO *)
 
   in
