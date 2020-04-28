@@ -3,6 +3,7 @@ List of TODOs that need implementing:
 	- list, arrays, and structs
 		- need to handle in scanner, parser, and semant
 		- need to implement functionality in c++
+		- literals to be implemented (if time allows?).
 	- implement ** (exponent) operator in parser (This seems to have been resolved)
 		- keeps reporting shift/reduce conflicts for some reason
 	- irgen stage
