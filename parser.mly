@@ -1,7 +1,7 @@
 %{ open Ast %}
 
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS PEQ MEQ TEQ DEQ ASSIGN
-%token DIVIDE TIMES MOD 
+%token DIVIDE TIMES MOD
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token ARRAY LIST STCT DEF RANGE
@@ -19,8 +19,8 @@
 %right ASSIGN
 %left OR
 %left AND
-%left EQ NEQ 
-%left LT GT LTE GTE 
+%left EQ NEQ
+%left LT GT LTE GTE
 %left PLUS MINUS
 %right PEQ MEQ
 %left DIVIDE TIMES MOD
@@ -28,18 +28,18 @@
 
 %%
 
-program: 
+program:
     stmt_list EOF  { $1 }
 
 stmt_list:
-    { [] } 
+    { [] }
   | stmt stmt_list  { $1::$2 }
 
-stmt: 
+stmt:
     expr SEMI  { Expr $1 }
   | vdecl SEMI  { $1 }
   | fdecl  { $1 }
-  | array_decl  { $1 } 
+  | array_decl  { $1 }
   | list_decl  { $1 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
@@ -55,7 +55,7 @@ stmt:
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
-  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) } 
+  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) }
   | PRINT LPAREN expr RPAREN SEMI  { Print($3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
@@ -63,7 +63,7 @@ stmt:
 
 dstmt:
     { [] }
-  | ELIF expr LBRACE stmt_list RBRACE dstmt  { Elif($2, $4)::$6 } 
+  | ELIF expr LBRACE stmt_list RBRACE dstmt  { Elif($2, $4)::$6 }
   | ELSE LBRACE stmt_list RBRACE dstmt { Else($3)::$5 }
 
 expr:
@@ -118,10 +118,10 @@ fargs_list:
   | vdecl COMMA fargs_list  { $1::$3 }
 
 args_opt:
-    { [] }     
+    { [] }
   | args  { $1 }
 
-args: 
+args:
     expr  { $1::[] }
   | expr COMMA args  { $1::$3 }
 
@@ -130,31 +130,3 @@ array_decl:
 
 list_decl:
     LIST LT typ GT ID SEMI  { Bind(List($3), $5) }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
