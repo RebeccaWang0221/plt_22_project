@@ -128,16 +128,16 @@ let translate stmts =
   	  | SElif(e, body) -> (* TODO *)
   	  | SElse(body) -> (* TODO *)
 			| SWhile(e, body) -> (* TODO *)
-				let pred_bb = L.append_block context "while" the_function in
+				let while_bb = L.append_block context "while" the_function in
         let body_bb = L.append_block context "while_body" the_function in
         let merge_bb = L.append_block context "merge" the_function in
-        let _ = L.build_br pred_bb builder in
+        let _ = L.build_br while_bb builder in
         let _ = break_block := L.value_of_block merge_bb in
-        let _ = continue_block := L.value_of_block pred_bb in
-        let pred_builder = L.builder_at_end context pred_bb in
-        let bool_val = build_expr pred_builder e in
-        let _ = L.build_cond_br bool_val body_bb merge_bb pred_builder in
-          add_terminal (build_stmt (L.builder_at_end context body_bb) body) (L.build_br pred_bb);
+        let _ = continue_block := L.value_of_block while_bb in
+        let while_builder = L.builder_at_end context while_bb in
+        let bool_val = build_expr while_builder e in
+        let _ = L.build_cond_br bool_val body_bb merge_bb while_builder in
+          add_terminal (build_stmt (L.builder_at_end context body_bb) body) (L.build_br while_bb);
           L.builder_at_end context merge_bb
   	  | SFor(var, e, body) -> (* TODO *)
   	  | SRange(var, e, body) -> (* TODO *)
