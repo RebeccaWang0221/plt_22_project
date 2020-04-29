@@ -1,19 +1,11 @@
 
 List of TODOs that need implementing:
 	- list, arrays, and structs
-		- need to handle in scanner, parser, and semant
+		- need to implement function calls in scanner, parser, and semant
 		- need to implement functionality in c++
 	- implement ** (exponent) operator in parser
 		- keeps reporting shift/reduce conflicts for some reason
 	- irgen stage
 		- fill in TODOs
-		- need to initialize builder object
 
 Questions:
-	- How to implement local and global variables given our program is defined as a list of stmts?
-		- Python doesn't allow you to re-declare a variable w/ same name inside of a function definition, so should we allow this?
-	- add_terminal in microc?
-	- basic blocks?
-		- specifically in control flow statements
-		- what is function parameter in L.append_block
-	- List and Array?
