@@ -131,7 +131,8 @@ let translate stmts =
   let rec build_stmt builder = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
-  	| SFuncDef(func_def) ->
+  	| SFuncDef(func_def) -> (* TODO: no clue if this is right, tried to implement similar to microc *)
+      Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
       let params = Array.map (fun x ->
@@ -145,17 +146,28 @@ let translate stmts =
           | None -> L.declare_function name ft the_module
           | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
       in
-      Array.iteri (fun i a -> (* add parameters to local_vars - might need to fix this bcz it is copied from example *)
-        let n = snd param_arr.(i) in
-        L.set_value_name n a;
-        Hashtbl.add local_vars n a;
-      ) (L.params f);
+      let add_formal (t, n) p =
+        L.set_value_name n p;
+        let local = L.build_alloca (ltype_of_typ t) n builder in
+        ignore(L.build_store p local builder);
+        Hashtbl.add n local local_vars;
+      and add_local (t, n) =
+        let local_var = L.build_alloca (ltype_of_typ t) n builder in
+        Hashtbl.add n local_var local_vars;
+      in
+      List.iter2 add_formal func_def.sformals (Array.to_list (L.params f));
+      List.iter add_local func_def.slocals;
       let bb = L.append_block context "entry" f in (* create entry point block for function *)
       L.position_at_end bb builder;
-        (*
-          TODO: need to recursively generate code for the each stmt in the body, and use build_ret or build_ret_void for
-          return stmts, then call Llvm_analysis.assert_valid_function to check for bugs, finally return the created function
-        *)
+      let rec build_body builder = function (* recursivley build each stmt in the body *)
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt builder st in
+          build_body b' tail
+      in
+      ignore(build_body builder func_def.sbody);
+      L.position_at_end bb builder;             (* position builder at the end of the function block *)
+      ignore(L.build_ret_void builder); builder (* build a void return when function reaches end *)
   	| SIf(e, body, dstmts) ->
       let cond = build_expr builder e in
       let start_bb = L.insertion_block builder
