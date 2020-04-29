@@ -83,7 +83,7 @@ expr:
   | expr GT expr  { Binop($1, Gt, $3) }
   | expr LTE expr  { Binop($1, Lte, $3) }
   | expr GTE expr  { Binop($1, Gte, $3) }
-  | expr EXP expr  { Binop($1, Exp, $3) }
+  /*| expr EXP expr  { Binop($1, Exp, $3) }*/
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
   | NOT ID  { Unop($2, Not) }
