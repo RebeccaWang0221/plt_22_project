@@ -7,5 +7,7 @@ List of TODOs that need implementing:
 		- keeps reporting shift/reduce conflicts for some reason
 	- irgen stage
 		- fill in TODOs
+	- gradual typing system
+	- higher order functions (if time permits)
 
 Questions:
