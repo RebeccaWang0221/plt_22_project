@@ -9,7 +9,7 @@ let translate stmts =
   let context = L.global_context () in
   let the_module = L.create_module context "RattleSnake" in
   let builder = L.builder context
-  and var_map = Hashtbl.create 30 in
+  and local_vars = Hashtbl.create 30 in
 
   (* get types from context *)
   let i32_t      = L.i32_type    context
@@ -36,7 +36,12 @@ let translate stmts =
 
   in
 
-  let lookup s = Hashtbl.find var_map s (* TODO: need to check for local varables AND global variables *)
+  let lookup s =
+    try Hashtbl.find local_vars s with (* check if s is a local variable *)
+      | Not_found ->
+        match L.lookup_global s the_module with (* check if s is a global variable *)
+          | Some g -> g
+          | None -> raise (Failure ("undeclared variable"))
 
   in
 
@@ -125,7 +130,7 @@ let translate stmts =
 
   let rec build_stmt builder = function
     | SExpr(e) -> ignore(build_expr builder e); builder
-    | SBind(ty, id) -> ignore(Hashtbl.add var_map id (ltype_of_typ ty)); builder (* add name: llvalue to var_map *)
+    | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
   	| SFuncDef(func_def) ->
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
@@ -140,10 +145,10 @@ let translate stmts =
           | None -> L.declare_function name ft the_module
           | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
       in
-      Array.iteri (fun i a -> (* add parameters to var_map *)
+      Array.iteri (fun i a -> (* add parameters to local_vars *)
         let n = snd param_arr.(i) in
         L.set_value_name n a;
-        Hashtbl.add var_map n a;
+        Hashtbl.add local_vars n a;
       ) (L.params f);
       let bb = L.append_block context "entry" f in (* create entry point block for function *)
       L.position_at_end bb builder;
@@ -176,8 +181,15 @@ let translate stmts =
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
       let e' = build_expr builder e in
-      ignore(L.build_store e' (lookup s) builder); builder (* TODO: define lookup function *)
-  	| SDecAssign(s, e) -> (* TODO *)
+      ignore(L.build_store e' (lookup s) builder); builder (* build store function to load value into register *)
+  	| SDecAssign(s, e) ->
+      let (ty, id) = match s with
+        | SBind(t, e) -> (t, e)
+        | _ -> raise (Failure ("invalid declaration"))
+      in
+      ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
+      let e' = build_expr builder e in
+      ignore(L.build_store e' (lookup id) builder); build_expr (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO *)
     | SPrint(e) -> (* TODO *)
   	| SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
