@@ -141,7 +141,7 @@ let translate stmts =
           L.builder_at_end context merge_bb
   	  | SFor(var, e, body) -> (* TODO *)
   	  | SRange(var, e, body) -> (* TODO *)
-  	  | SDo(body, e) -> (* TODO *)
+  	  | SDo(body, e) -> raise (Failure ("Error: Do has not been implemented for rattle"))
   	  | SReturn(e) -> (* TODO *)
   	  | SAssign(e1, e2) -> (* TODO *)
   	  | SDecAssign(s, e) -> (* TODO *)
@@ -149,7 +149,7 @@ let translate stmts =
       | SPrint(e) -> (* TODO *)
   	  | SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
   	  | SBreak -> ignore(L.build_br (L.block_of_value !break_block) builder); builder
-  	  | SPass -> (* TODO *)
+  	  | SPass -> raise (Failure ("Error: Pass has not been implemented for rattle"))
 
   in 
 
