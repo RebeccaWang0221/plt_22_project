@@ -145,7 +145,7 @@ let translate stmts =
           | None -> L.declare_function name ft the_module
           | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
       in
-      Array.iteri (fun i a -> (* add parameters to local_vars *)
+      Array.iteri (fun i a -> (* add parameters to local_vars - might need to fix this bcz it is copied from example *)
         let n = snd param_arr.(i) in
         L.set_value_name n a;
         Hashtbl.add local_vars n a;
