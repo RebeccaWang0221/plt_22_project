@@ -15,3 +15,5 @@ Questions:
 	- add_terminal in microc?
 	- basic blocks?
 		- specifically in control flow statements
+		- what is function parameter in L.append_block
+	- List and Array?
