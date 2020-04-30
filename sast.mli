@@ -5,17 +5,17 @@ and sx =
     SIntLit of int
   | SStrLit of string
   | SBoolLit of bool 
-  | SFloatLit of float 
-  | SCharLit of char 
+  | SFloatLit of float
+  | SCharLit of char
   | SLstLit of expr list
-  | SId of string 
-  | SBinop of sexpr * op * sexpr 
+  | SId of string
+  | SBinop of sexpr * op * sexpr
   | SUnop of string * un
   | SCall of string * sexpr list
   | SAccess of string * sexpr
   | SSlice of string * sexpr * sexpr
 
-type sstmt = 
+type sstmt =
   | SExpr of sexpr
   | SBind of typ * string
   | SFuncDef of sfunc_def
@@ -26,12 +26,12 @@ type sstmt =
   | SFor of sstmt * sexpr * sstmt list
   | SRange of sstmt * sexpr * sstmt list
   | SDo of sstmt list * sexpr
-  | SReturn of sexpr 
+  | SReturn of sexpr
   | SAssign of sexpr * sexpr
   | SDecAssign of sstmt * sexpr
   | SStruct of string * sstmt list
   | SPrint of sexpr
-  | SCont 
+  | SCont
   | SBreak
   | SPass
 and sfunc_def = {
@@ -43,7 +43,3 @@ and sfunc_def = {
 }
 
 type sprogram = sstmt list
-
-
-
-

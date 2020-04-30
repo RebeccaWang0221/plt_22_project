@@ -2,7 +2,16 @@ module L = Llvm
 module A = Ast
 open Sast
 
-module StringMap = Map.Make(String)
+(*
+    *** Main concerns ***
+      - builder object is initialized on line 20, but is going to need to be updated and passed around so that we are inserting
+        block in the correct areas. For instance in build_stmt of microc, some stmts simply return builder, but others return
+        L.builder_at_end. Why is this and how do we ensure that builder is always pointing to the correct location? Does builder
+        get updated automatically when making LLVM calls?
+      - we want to treat the whole program script as a main function of sorts. So when making calls to append_block, should we
+        always use main_function (declared on line 42) or should this change depending on the specific instruction we are building
+      - need to make sure we clear local_vars when finished with loading the local variables of a function
+*)
 
 let translate stmts =
   (* create the LLVM compilation module to which we will generate the code *)
@@ -27,6 +36,12 @@ let translate stmts =
     | A.String -> string_t
     | A.Char -> i8_t
     | A.Void -> void_t
+  in
+
+  let main_ft = L.function_type i1_t [||] in
+  let main_function = L.define_function "main" main_ft the_module
+  (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
+
   in
 
   let add_terminal builder instr =
@@ -121,7 +136,7 @@ let translate stmts =
         and args_arr = Array.of_list args in
         if Array.length params <> Array.length args_arr then
           raise (Failure ("incorrect # of arguments passed"))
-        else let args1 = Array.map build_expr args in (* not sure if this map call will work bcz build_expr needs builder as argument *)
+        else let args1 = Array.map build_expr args in (* TODO: map call won't work bcz build_expr needs builder as argument *)
         L.build_call callee args1 "call_func" builder
       | SAccess(id, e) -> (* TODO *)
       | SSlice(id, e1, e1) -> (* TODO *)
@@ -131,7 +146,8 @@ let translate stmts =
   let rec build_stmt builder = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
-  	| SFuncDef(func_def) ->
+  	| SFuncDef(func_def) -> (* TODO: no clue if this is right, tried to implement similar to microc *)
+      Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
       let params = Array.map (fun x ->
@@ -145,28 +161,65 @@ let translate stmts =
           | None -> L.declare_function name ft the_module
           | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
       in
-      Array.iteri (fun i a -> (* add parameters to local_vars - might need to fix this bcz it is copied from example *)
-        let n = snd param_arr.(i) in
-        L.set_value_name n a;
-        Hashtbl.add local_vars n a;
-      ) (L.params f);
+      let add_formal (t, n) p =
+        L.set_value_name n p;
+        let local = L.build_alloca (ltype_of_typ t) n builder in
+        ignore(L.build_store p local builder);
+        Hashtbl.add n local local_vars;
+      and add_local (t, n) =
+        let local_var = L.build_alloca (ltype_of_typ t) n builder in
+        Hashtbl.add n local_var local_vars;
+      in
+      List.iter2 add_formal func_def.sformals (Array.to_list (L.params f));
+      List.iter add_local func_def.slocals;
       let bb = L.append_block context "entry" f in (* create entry point block for function *)
       L.position_at_end bb builder;
-        (*
-          TODO: need to recursively generate code for the each stmt in the body, and use build_ret or build_ret_void for
-          return stmts, then call Llvm_analysis.assert_valid_function to check for bugs, finally return the created function
-        *)
+      let rec build_body b = function (* recursivley build each stmt in the body *)
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b st in
+          build_body b' tail
+      in
+      ignore(build_body builder func_def.sbody);
+      L.position_at_end bb builder;             (* position builder at the end of the function block *)
+      ignore(L.build_ret_void builder); (* build a void return when function reaches end *)
+      L.builder_at_end context bb
   	| SIf(e, body, dstmts) ->
+        let cond = build_expr builder e in
+        let then_bb = L.append_block context "if_then" main_function in (* build block if conditional is true *)
+        let rec build_body b = function (* recursively generate code for body *)
+          | [] -> []
+          | _ as st :: tail ->
+            let b' = build_stmt b st in
+            build_body b' tail
+        in
+        ignore(build_body (L.builder_at_end context then_bb) body)); (* generate code starting at end of then_bb *)
+        (* TODO: figure out how to generate blocks and code for the dstmts, ie SElif and SElse *)
+  	| SElif(e, body) ->
       let cond = build_expr builder e in
-      let start_bb = L.insertion_block builder
-      let then_bb = L.insert_block context "then" start_bb in
-        (* TODO: finish rest of SIf - copied from Kaleidoscope tutorial but cannot figure out *)
-  	| SElif(e, body) -> (* TODO *)
-  	| SElse(body) -> (* TODO *)
-  	| SWhile(e, body) -> (* TODO: the_function is not defined, need to either define or figure out diff way *)
-      let while_bb = L.append_block context "while" the_function in
-      let body_bb = L.append_block context "while_body" the_function in
-      let merge_bb = L.append_block context "merge" the_function in
+      let then_bb = L.append_block context "elif_then" main_function in
+      let rec build_body b = function (* recursively generate code for body *)
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b st in
+          build_body b' tail
+      in
+      ignore(build_body (L.builder_at_end context then_bb) body));
+        (* TODO: build conditional breaks and add terminal *)
+  	| SElse(body) ->
+      let else_bb = L.append_block context "else" main_function in
+      let rec build_body b = function (* recursively generate code for body *)
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b st in
+          build_body b' tail
+      in
+      ignore(build_body (L.builder_at_end context else_bb) body));
+        (* TODO: build conditional breaks and add terminal *)
+  	| SWhile(e, body) ->
+      let while_bb = L.append_block context "while" main_function in
+      let body_bb = L.append_block context "while_body" main_function in
+      let merge_bb = L.append_block context "merge" main_function in
       let _ = L.build_br while_bb builder in
       let _ = break_block := L.value_of_block merge_bb in
       let _ = continue_block := L.value_of_block while_bb in
