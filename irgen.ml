@@ -143,7 +143,7 @@ let translate stmts =
 
   in
 
-  let rec build_stmt builder = function
+  let rec build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
   	| SFuncDef(func_def) -> (* TODO: no clue if this is right, tried to implement similar to microc *)
@@ -177,7 +177,7 @@ let translate stmts =
       let rec build_body b = function (* recursivley build each stmt in the body *)
         | [] -> []
         | _ as st :: tail ->
-          let b' = build_stmt b st in
+          let b' = build_stmt b f st in
           build_body b' tail
       in
       ignore(build_body builder func_def.sbody);
@@ -186,40 +186,40 @@ let translate stmts =
       L.builder_at_end context bb
   	| SIf(e, body, dstmts) ->
         let cond = build_expr builder e in
-        let then_bb = L.append_block context "if_then" main_function in (* build block if conditional is true *)
+        let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
         let rec build_body b = function (* recursively generate code for body *)
           | [] -> []
           | _ as st :: tail ->
-            let b' = build_stmt b st in
+            let b' = build_stmt b the_function st in
             build_body b' tail
         in
         ignore(build_body (L.builder_at_end context then_bb) body)); (* generate code starting at end of then_bb *)
         (* TODO: figure out how to generate blocks and code for the dstmts, ie SElif and SElse *)
   	| SElif(e, body) ->
       let cond = build_expr builder e in
-      let then_bb = L.append_block context "elif_then" main_function in
+      let then_bb = L.append_block context "elif_then" the_function in
       let rec build_body b = function (* recursively generate code for body *)
         | [] -> []
         | _ as st :: tail ->
-          let b' = build_stmt b st in
+          let b' = build_stmt b the_function st in
           build_body b' tail
       in
       ignore(build_body (L.builder_at_end context then_bb) body));
         (* TODO: build conditional breaks and add terminal *)
   	| SElse(body) ->
-      let else_bb = L.append_block context "else" main_function in
+      let else_bb = L.append_block context "else" the_function in
       let rec build_body b = function (* recursively generate code for body *)
         | [] -> []
         | _ as st :: tail ->
-          let b' = build_stmt b st in
+          let b' = build_stmt b the_function st in
           build_body b' tail
       in
       ignore(build_body (L.builder_at_end context else_bb) body));
         (* TODO: build conditional breaks and add terminal *)
   	| SWhile(e, body) ->
-      let while_bb = L.append_block context "while" main_function in
-      let body_bb = L.append_block context "while_body" main_function in
-      let merge_bb = L.append_block context "merge" main_function in
+      let while_bb = L.append_block context "while" the_function in
+      let body_bb = L.append_block context "while_body" the_function in
+      let merge_bb = L.append_block context "merge" the_function in
       let _ = L.build_br while_bb builder in
       let _ = break_block := L.value_of_block merge_bb in
       let _ = continue_block := L.value_of_block while_bb in
@@ -251,5 +251,5 @@ let translate stmts =
 
   in
 
-  List.iter build_stmt stmts;
+  List.iter (build_stmt builder main_function) stmts;
   the_module
