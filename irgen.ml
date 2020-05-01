@@ -45,7 +45,8 @@ let translate stmts =
   in
 
   let print_func = (* TODO: declare print function *)
-
+    let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+    L.declare_function "print_func" ft the_module
   in
 
   let add_terminal builder instr =
@@ -176,7 +177,7 @@ let translate stmts =
       in
       List.iter2 add_formal func_def.sformals (Array.to_list (L.params f));
       List.iter add_local func_def.slocals;
-      let bb = L.append_block context "entry" f in (* create entry point block for function *)
+      let bb = L.append_block context "func_body" f in (* create entry point block for function *)
       L.position_at_end bb builder;
       let rec build_body b = function (* recursively build each stmt in the body *)
         | [] -> []
@@ -229,19 +230,25 @@ let translate stmts =
       add_terminal (L.builder_at_end context then_bb) build_br_end; (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
   	| SWhile(e, body) -> (* TODO: check if this is correct *)
-      let while_bb = L.append_block context "while" the_function in
-      let body_bb = L.append_block context "while_body" the_function in
-      let merge_bb = L.append_block context "merge" the_function in
-      let _ = L.build_br while_bb builder in
-      let _ = break_block := L.value_of_block merge_bb in
-      let _ = continue_block := L.value_of_block while_bb in
-      let while_builder = L.builder_at_end context while_bb in
-      let bool_val = build_expr while_builder e in
-      let _ = L.build_cond_br bool_val body_bb merge_bb while_builder in
-      add_terminal (build_stmt (L.builder_at_end context body_bb) body) (L.build_br while_bb);
-      L.builder_at_end context merge_bb
+      let cond = build_expr builder e in
+      let entry_bb = L.append_block context "while_entry" the_function in
+      let while_body = L.append_block context "while_body" the_function in
+      let build_body b = function
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b the_function st in
+          build_body b' tail
+      in
+      ignore(build_body (L.builder_at_end context while_body) body);
+      let end_bb = L.append_block context "while_end" the_function in
+      ignore(L.build_br entry_bb (L.builder_at_end while_body));
+      ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end entry_bb));
+      L.builder_at_end context end_bb
   	| SFor(var, e, body) -> (* TODO *)
-  	| SRange(var, e, body) -> (* TODO *)
+  	| SRange(var, e, body) ->
+      let start_val = L.const_int i32_t 0 in
+      let loop_body = L.append_block context "range_body" the_function in
+      (* TODO: finish *)
   	| SDo(body, e) -> (* TODO *)
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
@@ -256,11 +263,13 @@ let translate stmts =
       let e' = build_expr builder e in
       ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO *)
+      builder
     | SPrint(e) ->
-      (* TODO: build expr e and then build_call for print_func *)
+      ignore(L.build_call print_func [| int_format_str ; (build_expr builder e) |] "print" builder); builder
   	| SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
   	| SBreak -> ignore(L.build_br (L.block_of_value !break_block) builder); builder
   	| SPass -> (* TODO *)
+      builder
 
   in
 
