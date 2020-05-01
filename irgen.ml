@@ -44,6 +44,10 @@ let translate stmts =
 
   in
 
+  let print_func = (* TODO: declare print function *)
+
+  in
+
   let add_terminal builder instr =
       match L.block_terminator (L.insertion_block builder) with
         Some _ -> ()
@@ -184,7 +188,7 @@ let translate stmts =
       L.position_at_end bb builder;             (* position builder at the end of the function block *)
       ignore(L.build_ret_void builder);         (* build a void return when function reaches end *)
       L.builder_at_end context bb
-  	| SIf(e, body, dstmts) ->
+  	| SIf(e, body, dstmts) -> (* TODO: check if this is correct *)
       let cond = build_expr builder e in
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
       let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
@@ -224,7 +228,7 @@ let translate stmts =
       else ignore(L.build_cond_br cond then_bb end_bb (L.builder_at_end entry)); (* otherwise build conditional branch to end_bb *)
       add_terminal (L.builder_at_end context then_bb) build_br_end; (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
-  	| SWhile(e, body) ->
+  	| SWhile(e, body) -> (* TODO: check if this is correct *)
       let while_bb = L.append_block context "while" the_function in
       let body_bb = L.append_block context "while_body" the_function in
       let merge_bb = L.append_block context "merge" the_function in
@@ -250,9 +254,10 @@ let translate stmts =
       in
       ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
       let e' = build_expr builder e in
-      ignore(L.build_store e' (lookup id) builder); build_expr (* build store function to load value into register *)
+      ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO *)
-    | SPrint(e) -> (* TODO *)
+    | SPrint(e) ->
+      (* TODO: build expr e and then build_call for print_func *)
   	| SCont -> ignore(L.build_br (L.block_of_value !continue_block) builder); builder
   	| SBreak -> ignore(L.build_br (L.block_of_value !break_block) builder); builder
   	| SPass -> (* TODO *)
