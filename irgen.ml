@@ -4,13 +4,8 @@ open Sast
 
 (*
     *** Main concerns ***
-      - builder object is initialized on line 20, but is going to need to be updated and passed around so that we are inserting
-        block in the correct areas. For instance in build_stmt of microc, some stmts simply return builder, but others return
-        L.builder_at_end. Why is this and how do we ensure that builder is always pointing to the correct location? Does builder
-        get updated automatically when making LLVM calls?
-      - we want to treat the whole program script as a main function of sorts. So when making calls to append_block, should we
-        always use main_function (declared on line 42) or should this change depending on the specific instruction we are building
-      - need to make sure we clear local_vars when finished with loading the local variables of a function
+      - How to implement list, array, and struct???
+      - What is a phi node and how do we use it in for loops like Kaleidescope example???
 *)
 
 let translate stmts =
