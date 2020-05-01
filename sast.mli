@@ -7,22 +7,13 @@ and sx =
   | SBoolLit of bool 
   | SFloatLit of float 
   | SCharLit of char 
-  | SLstLit of string
+  | SLstLit of expr list
   | SId of string 
   | SBinop of sexpr * op * sexpr 
   | SUnop of string * un
   | SCall of string * sexpr list
-  | SPrint of sexpr
   | SAccess of string * sexpr
   | SSlice of string * sexpr * sexpr
-
-type sfunc_def = {
-  srtyp: typ;
-  sfname: string;
-  sformals: sstmt list;
-  slocals: sstmt list;
-  sbody: sstmt list;
-}
 
 type sstmt = 
   | SExpr of sexpr
@@ -39,9 +30,17 @@ type sstmt =
   | SAssign of sexpr * sexpr
   | SDecAssign of sstmt * sexpr
   | SStruct of string * sstmt list
+  | SPrint of sexpr
   | SCont 
   | SBreak
   | SPass
+and sfunc_def = {
+  srtyp: typ;
+  sfname: string;
+  sformals: (typ * string) list;
+  slocals: (typ * string) list;
+  sbody: sstmt list;
+}
 
 type sprogram = sstmt list
 

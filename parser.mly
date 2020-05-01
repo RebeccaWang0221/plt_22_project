@@ -1,17 +1,16 @@
 %{ open Ast %}
 
 %token SEMI COLON LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK PLUS MINUS PEQ MEQ TEQ DEQ ASSIGN
-%token DIVIDE TIMES MOD
+%token DIVIDE TIMES MOD 
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
-%token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL NONE
-%token LIST STCT DEF RANGE
-%token RETURN BREAK CONT PASS COMMA PRINT
+%token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
+%token ARRAY LIST STCT DEF RANGE
+%token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
 %token <float> FLOATLIT
 %token <bool> BLIT
 %token <string> STRLIT
 %token <string> ID
-%token <string> LSTLIT
 %token EOF
 
 %start program
@@ -30,7 +29,7 @@
 %%
 
 program: 
-    stmt_list EOF  { List.rev $1 }
+    stmt_list EOF  { $1 }
 
 stmt_list:
     { [] } 
@@ -40,7 +39,8 @@ stmt:
     expr SEMI  { Expr $1 }
   | vdecl SEMI  { $1 }
   | fdecl  { $1 }
-/*  | array_decl SEMI { $1 } */
+  | array_decl  { $1 } 
+  | list_decl  { $1 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
   | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $9) }
@@ -50,10 +50,13 @@ stmt:
   | expr MEQ expr SEMI  { Assign($1, Binop($1, Sub, $3)) }
   | expr TEQ expr SEMI  { Assign($1, Binop($1, Mult, $3)) }
   | expr DEQ expr SEMI  { Assign($1, Binop($1, Div, $3)) }
+  | expr INC SEMI  { Assign($1, Binop($1, Add, IntLit(1))) }
+  | expr DEC SEMI  { Assign($1, Binop($1, Sub, IntLit(1))) }
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
   | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) } 
+  | PRINT LPAREN expr RPAREN SEMI  { Print($3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
   | PASS SEMI  { Pass }
@@ -68,7 +71,6 @@ expr:
   | INTLIT  { IntLit($1) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
-  | LSTLIT { LstLit($1) }
   | ID  { Id($1) }
   | expr PLUS expr  { Binop($1, Add, $3) }
   | expr MINUS expr  { Binop($1, Sub, $3) }
@@ -83,12 +85,9 @@ expr:
   | expr GTE expr  { Binop($1, Gte, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
-  | ID INC  { Unop($1, Inc) }
-  | ID DEC  { Unop($1, Dec) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
-  | PRINT LPAREN expr RPAREN  { Print($3) }
   | ID LBRACK expr RBRACK  { Access($1, $3) }
   | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 
@@ -98,7 +97,7 @@ typ:
   | STRING  { String }
   | BOOL  { Bool }
   | CHAR  { Char }
-  | LIST  { Lst }
+  | VOID  { Void }
 
 vdecl:
     typ ID  { Bind($1, $2) }
@@ -111,7 +110,8 @@ fdecl:
     DEF vdecl LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }
 
 fcall_args:
-    fargs_list  { $1 }
+    { [] }
+  | fargs_list  { $1 }
 
 fargs_list:
     vdecl  { $1::[] }
@@ -124,11 +124,15 @@ args_opt:
 args: 
     expr  { $1::[] }
   | expr COMMA args  { $1::$3 }
-/* TODO: fix array shift/reduce conflict 
+
 array_decl:
-    typ ID ASSIGN LBRACE args_opt RBRACE  { DecArr(Bind(Array($1, IntLit(List.length $5)), $2), $5) }
-  | typ ID LBRACK expr RBRACK { Bind(Array($1, $4), $2) }
-*/
+    ARRAY LT typ GT ID LBRACK expr RBRACK SEMI  { Bind(Array($3, $7), $5) }
+
+list_decl:
+    LIST LT typ GT ID SEMI  { Bind(List($3), $5) }
+
+
+
 
 
 

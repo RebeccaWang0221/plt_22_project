@@ -1,6 +1,6 @@
-type op = Add | Sub | Mult | Div | Mod | Eq | Neq | And | Or | Lt | Gt | Lte | Gte 
+type op = Add | Sub | Mult | Div | Mod | Exp | Eq | Neq | And | Or | Lt | Gt | Lte | Gte 
 
-type un = Inc | Dec | Not
+type un = Not
 
 (* expressions *)
 type expr = 
@@ -9,17 +9,15 @@ type expr =
   | BoolLit of bool 
   | FloatLit of float 
   | CharLit of char 
-  | LstLit of expr list 
   | ArrayLit of expr list
   | Id of string 
   | Binop of expr * op * expr 
   | Unop of string * un
   | Call of string * expr list
-  | Print of expr
   | Access of string * expr
   | Slice of string * expr * expr
 
-type typ = Int | String | Bool | Float | Char | Lst | Stct | Array of typ * expr
+type typ = Int | String | Bool | Float | Char | List of typ | Stct | Void | Array of typ * expr
 
 (* statements *)
 type stmt = 
@@ -38,6 +36,7 @@ type stmt =
   | DecAssign of stmt * expr
   | DecArr of stmt * expr list
   | Struct of string * stmt list
+  | Print of expr
   | Cont 
   | Break
   | Pass
