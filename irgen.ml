@@ -44,7 +44,7 @@ let translate stmts =
 
   in
 
-  let print_func = (* TODO: declare print function *)
+  let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
   in
@@ -113,7 +113,7 @@ let translate stmts =
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
         	  (match op with
-          	    | A.Add -> L.build_add
+          	  | A.Add -> L.build_add
           		| A.Sub -> L.build_sub
           		| A.Div -> L.build_sdiv
           		| A.Mult-> L.build_mul
@@ -141,7 +141,7 @@ let translate stmts =
         and args_arr = Array.of_list args in
         if Array.length params <> Array.length args_arr then
           raise (Failure ("incorrect # of arguments passed"))
-        else let args1 = Array.map build_expr args in (* TODO: map call won't work bcz build_expr needs builder as argument *)
+        else let args1 = Array.map (build_expr builder) args in
         L.build_call callee args1 "call_func" builder
       | SAccess(id, e) -> (* TODO *)
       | SSlice(id, e1, e1) -> (* TODO *)
@@ -151,7 +151,7 @@ let translate stmts =
   let rec build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
-  	| SFuncDef(func_def) -> (* TODO: no clue if this is right, tried to implement similar to microc *)
+  	| SFuncDef(func_def) -> (* CHECK: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
@@ -189,7 +189,7 @@ let translate stmts =
       L.position_at_end bb builder;             (* position builder at the end of the function block *)
       ignore(L.build_ret_void builder);         (* build a void return when function reaches end *)
       L.builder_at_end context bb
-  	| SIf(e, body, dstmts) -> (* TODO: check if this is correct *)
+  	| SIf(e, body, dstmts) -> (* CHECK: check if this is correct *)
       let cond = build_expr builder e in
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
       let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
@@ -229,7 +229,7 @@ let translate stmts =
       else ignore(L.build_cond_br cond then_bb end_bb (L.builder_at_end entry)); (* otherwise build conditional branch to end_bb *)
       add_terminal (L.builder_at_end context then_bb) build_br_end; (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
-  	| SWhile(e, body) -> (* TODO: check if this is correct *)
+  	| SWhile(e, body) -> (* CHECK: check if this is correct *)
       let cond = build_expr builder e in
       let entry_bb = L.append_block context "while_entry" the_function in
       let while_body = L.append_block context "while_body" the_function in
@@ -244,11 +244,43 @@ let translate stmts =
       ignore(L.build_br entry_bb (L.builder_at_end while_body));
       ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end entry_bb));
       L.builder_at_end context end_bb
-  	| SFor(var, e, body) -> (* TODO *)
+  	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
+      builder
   	| SRange(var, e, body) ->
       let start_val = L.const_int i32_t 0 in
+      let preheader_bb = L.insertion_block builder in
       let loop_body = L.append_block context "range_body" the_function in
-      (* TODO: finish *)
+      ignore(build_br loop_body builder);
+      L.position_at_end loop_body builder;
+      let var_name = match var with
+        | SBind(t, n) -> n
+        | _ -> raise (Failure ("invalid variable declaration in range loop"))
+      in
+      let variable = L.build_phi [(start_val, preheader_bb)] var_name builder in
+      let old_val = try Some (Hashtbl.find local_vars var_name) with Not_found -> None in
+      Hashtbl.add local_vars var_name variable;
+      let build_body b = function
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b the_function st in
+          build_body b' tail
+      in
+      ignore(build_body (L.builder_at_end context loop_body) body);
+      let step_val = L.const_int i8_t 1 in
+      let next_var = build_add variable step_val "next_var" builder in
+      let end_cond = build_expr builder e in
+      let zero = L.const_int i8_t 0 in
+      let end_cond = build_icmp L.Icmp.Ne end_cond zero "loop_cond" builder in
+      let loop_end_bb = insertion_block builder in
+      let end_bb = L.append_block context "end_for" the_function in
+      ignore(build_cond_br end_cond loop_bb end_bb builder);
+      L.position_at_end end_bb builder;
+      L.add_incoming (next_var, loop_end_bb) variable;
+      begin match old_val with
+        | Some old_val -> Hashtbl.add local_vars var_name old_val
+        | None -> ()
+      end;
+      L.builder_at_end end_bb
   	| SDo(body, e) -> (* TODO *)
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
@@ -262,7 +294,7 @@ let translate stmts =
       ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
       let e' = build_expr builder e in
       ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
-  	| SStruct(id, body) -> (* TODO *)
+  	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
       ignore(L.build_call print_func [| int_format_str ; (build_expr builder e) |] "print" builder); builder
