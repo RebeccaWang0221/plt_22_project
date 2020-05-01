@@ -231,7 +231,7 @@ let translate stmts =
   	| SFor(var, e, body) -> (* TODO *)
   	| SRange(var, e, body) -> (* TODO *)
     | SDo(body, e) -> build_stmt builder
-      ( List.fold_left build_stmt builder [body ; SWhileLoop (predicate, body) ] )
+      ( List.fold_left build_stmt builder [body ; SWhile (predicate, body) ] )
     
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
