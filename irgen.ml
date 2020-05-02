@@ -146,7 +146,7 @@ let translate stmts =
   let rec build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
-  	| SFuncDef(func_def) -> (* CHECK: no clue if this is right, tried to implement similar to microc *)
+  	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
@@ -184,7 +184,7 @@ let translate stmts =
       L.position_at_end bb builder;             (* position builder at the end of the function block *)
       ignore(L.build_ret_void builder);         (* build a void return when function reaches end *)
       L.builder_at_end context bb
-  	| SIf(e, body, dstmts) -> (* CHECK: check if this is correct *)
+  	| SIf(e, body, dstmts) -> (* TEST: check if this is correct *)
       let cond = build_expr builder e in
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
       let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
@@ -224,7 +224,7 @@ let translate stmts =
       else ignore(L.build_cond_br cond then_bb end_bb (L.builder_at_end entry)); (* otherwise build conditional branch to end_bb *)
       add_terminal (L.builder_at_end context then_bb) build_br_end; (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
-  	| SWhile(e, body) -> (* CHECK: check if this is correct *)
+  	| SWhile(e, body) -> (* TEST: check if this is correct *)
       let cond = build_expr builder e in
       let entry_bb = L.append_block context "while_entry" the_function in
       let while_body = L.append_block context "while_body" the_function in
