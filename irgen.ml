@@ -4,13 +4,7 @@ open Sast
 
 (*
     *** Main concerns ***
-      - builder object is initialized on line 20, but is going to need to be updated and passed around so that we are inserting
-        block in the correct areas. For instance in build_stmt of microc, some stmts simply return builder, but others return
-        L.builder_at_end. Why is this and how do we ensure that builder is always pointing to the correct location? Does builder
-        get updated automatically when making LLVM calls?
-      - we want to treat the whole program script as a main function of sorts. So when making calls to append_block, should we
-        always use main_function (declared on line 42) or should this change depending on the specific instruction we are building
-      - need to make sure we clear local_vars when finished with loading the local variables of a function
+      - How to implement list, array, and struct???
 *)
 
 let translate stmts =
@@ -38,22 +32,15 @@ let translate stmts =
     | A.Void -> void_t
   in
 
-  let main_ft = L.function_type i1_t [||] in
+  let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
 
   in
 
-  let print_func = (* TODO: declare print function *)
+  let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
-  in
-
-  let add_terminal builder instr =
-      match L.block_terminator (L.insertion_block builder) with
-        Some _ -> ()
-			| None -> ignore (instr builder) in
-
   in
 
   let lookup s =
@@ -113,7 +100,7 @@ let translate stmts =
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
         	  (match op with
-          	    | A.Add -> L.build_add
+          	  | A.Add -> L.build_add
           		| A.Sub -> L.build_sub
           		| A.Div -> L.build_sdiv
           		| A.Mult-> L.build_mul
@@ -141,17 +128,19 @@ let translate stmts =
         and args_arr = Array.of_list args in
         if Array.length params <> Array.length args_arr then
           raise (Failure ("incorrect # of arguments passed"))
-        else let args1 = Array.map build_expr args in (* TODO: map call won't work bcz build_expr needs builder as argument *)
+        else let args1 = Array.map (build_expr builder) args in
         L.build_call callee args1 "call_func" builder
-      | SAccess(id, e) -> (* TODO *)
-      | SSlice(id, e1, e1) -> (* TODO *)
+      (* TODO:
+      | SAccess(id, e) ->
+      | SSlice(id, e1, e1) ->
+      *)
 
   in
 
   let rec build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
-  	| SFuncDef(func_def) -> (* TODO: no clue if this is right, tried to implement similar to microc *)
+  	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
@@ -189,9 +178,9 @@ let translate stmts =
       L.position_at_end bb builder;             (* position builder at the end of the function block *)
       ignore(L.build_ret_void builder);         (* build a void return when function reaches end *)
       L.builder_at_end context bb
-  	| SIf(e, body, dstmts) -> (* TODO: check if this is correct *)
-      let cond = build_expr builder e in
+  	| SIf(e, body, dstmts) -> (* TEST *)
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
+      let cond = build_expr (L.builder_at_end entry) e in
       let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
       let rec build_body b = function (* recursively generate code for body *)
         | [] -> []
@@ -199,14 +188,14 @@ let translate stmts =
           let b' = build_stmt b the_function st in
           build_body b' tail
       in
-      ignore(build_body (L.builder_at_end context then_bb) body)); (* generate code starting at end of then_bb *)
+      ignore(build_body (L.builder_at_end context then_bb) body); (* generate code starting at end of then_bb *)
       let end_bb = L.append_block context "if_end" the_function in
-      let build_br_end = L.build_br end_bb in (* builds a break at end of end_bb *)
+      let build_br_end = L.build_br end_bb in (* builds a branch to end_bb *)
       let rec build_dstmts b f = function
         | [] -> []
         | SElif(e, body) :: tail ->
-          let cond1 = build_expr b e in
           let elif_entry = L.append_block context "elif_entry" f in (* create an elif entry point bb *)
+          let cond1 = build_expr (L.builder_at_end elif_entry) e in
           let elif_bb = L.append_block context "elif_then" f in (* create bb for elif body *)
           let res = build_dstmts b f tail in (* recursively build rest of dstmts from the bottom up *)
           if List.length res <> 0 then (* if there is dstmts following current elif, build conditional branch to other dstmts *)
@@ -215,11 +204,11 @@ let translate stmts =
             ignore(L.build_cond_br cond1 elif_bb next_bb (L.builder_at_end elif_entry));
           else ignore(L.build_cond_br cond1 elif_bb end_bb (L.builder_at_end elif_entry)); (* otherwise build conditional branch to end_bb *)
           ignore(build_body (L.builder_at_end context elif_bb) body); (* build elif body *)
-          ignore(add_terminal (L.builder_at_end context elif_bb) build_br_end); [elif_entry] (* build branch to end_bb inside elif body, then return entrypoint *)
+          ignore(L.build_br end_bb (L.builder_at_end context elif_bb)); [elif_entry] (* build branch to end_bb inside elif body, then return entrypoint *)
         | SElse(body) :: tail -> (* there is always only one else at the very end *)
           let bb = L.append_block context "else" f in (* create bb for else body *)
           ignore(build_body (L.builder_at_end bb) body);
-          ignore(add_terminal (L.builder_at_end context bb) build_br_end); [bb] (* build branch to end_bb inside else body, then return bb *)
+          ignore(L.build_br end_bb (L.builder_at_end bb)); [bb] (* build branch to end_bb inside else body, then return bb *)
         | _ -> raise (Failure ("invalid dangling statement in if"))
       in
       let else_bb_lst = build_dstmts builder the_function dstmts in
@@ -227,11 +216,11 @@ let translate stmts =
         let else_bb = List.hd else_bb_lst in
         ignore(L.build_cond_br cond then_bb else_bb (L.builder_at_end entry));
       else ignore(L.build_cond_br cond then_bb end_bb (L.builder_at_end entry)); (* otherwise build conditional branch to end_bb *)
-      add_terminal (L.builder_at_end context then_bb) build_br_end; (* build branch to end_bb at end of then_bb *)
+      ignore(L.build_br end_bb (L.builder_at_end then_bb)); (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
-  	| SWhile(e, body) -> (* TODO: check if this is correct *)
-      let cond = build_expr builder e in
-      let entry_bb = L.append_block context "while_entry" the_function in
+  	| SWhile(e, body) -> (* TEST *)
+      let entry_bb = L.append_block context "while_entry" the_function in (* build entry block *)
+      let cond = build_expr (L.builder_at_end entry_bb) e in (* build conditional inside of entry block *)
       let while_body = L.append_block context "while_body" the_function in
       let build_body b = function
         | [] -> []
@@ -239,17 +228,54 @@ let translate stmts =
           let b' = build_stmt b the_function st in
           build_body b' tail
       in
-      ignore(build_body (L.builder_at_end context while_body) body);
+      ignore(build_body (L.builder_at_end context while_body) body); (* build body inside of while_body block *)
       let end_bb = L.append_block context "while_end" the_function in
-      ignore(L.build_br entry_bb (L.builder_at_end while_body));
-      ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end entry_bb));
+      ignore(L.build_br entry_bb (L.builder_at_end while_body)); (* branch to entry_bb at end of while_bb *)
+      ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end entry_bb)); (* conditional branch to while_body or end_body at the end of entry_bb *)
       L.builder_at_end context end_bb
-  	| SFor(var, e, body) -> (* TODO *)
-  	| SRange(var, e, body) ->
-      let start_val = L.const_int i32_t 0 in
-      let loop_body = L.append_block context "range_body" the_function in
-      (* TODO: finish *)
-  	| SDo(body, e) -> (* TODO *)
+  	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
+      builder
+  	| SRange(var, e, body) -> (* TEST *)
+      let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
+      let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
+      ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
+      let entry_bb = L.append_block context the_function in (* entry point *)
+      let body_bb = L.append_block context the_function in
+      let build_body b = function
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b the_function st in
+          build_body b' tail
+      in
+      ignore(build_body (L.builder_at_end context body_bb) body); (* build body inside of body_bb *)
+      let body_builder = L.builder_at_end context body_bb in
+      let tmp_val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
+      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in (* increment iterator value by 1 *)
+      ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
+      ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
+      let end_bb = L.append_block context the_function in
+      let end_val = build_expr builder e in
+      let entry_builder = L.builder_at_end context entry_bb in
+      let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
+      let cond = L.build_icmp L.Icmp.Eq curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+      ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
+      L.builder_at_end context end_bb
+  	| SDo(body, e) ->
+      let do_bb = L.append_block context the_function in (* create main loop body block *)
+      ignore(L.build_br do_bb builder); (* force it to execute at least once *)
+      let build_body b = function
+        | [] -> []
+        | _ as st :: tail ->
+          let b' = build_stmt b the_function tail in
+          build_body b' tail
+      ignore(build_body (L.builder_at_end do_bb) body);
+      let while_bb = L.append_block context the_function in
+      let end_bb = L.append_block context the_function in
+      let while_builder = L.builder_at_end context while_bb in
+      let cond = build_expr while_builder e in
+      ignore(L.build_cond_br cond do_bb end_bb while_builder); (* conditional branch at end of while_bb to either do_bb or end_bb *)
+      ignore(L.build_br while_bb (L.builder_at_end context do_bb)); (* branch at end of do_bb to while_bb *)
+      L.builder_at_end context end_bb
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
       let e' = build_expr builder e in
@@ -262,7 +288,7 @@ let translate stmts =
       ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
       let e' = build_expr builder e in
       ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
-  	| SStruct(id, body) -> (* TODO *)
+  	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
       ignore(L.build_call print_func [| int_format_str ; (build_expr builder e) |] "print" builder); builder
@@ -271,7 +297,7 @@ let translate stmts =
   	| SPass -> (* TODO *)
       builder
 
-  in
+  in (* TODO: build return for main_function *)
 
   List.iter (build_stmt builder main_function) stmts;
   the_module
