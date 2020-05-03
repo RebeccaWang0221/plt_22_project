@@ -5,7 +5,6 @@ open Sast
 (*
     *** Main concerns ***
       - How to implement list, array, and struct???
-      - What is a phi node and how do we use it in for loops like Kaleidescope example???
 *)
 
 let translate stmts =
@@ -33,7 +32,7 @@ let translate stmts =
     | A.Void -> void_t
   in
 
-  let main_ft = L.function_type i1_t [||] in
+  let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
 
@@ -42,13 +41,6 @@ let translate stmts =
   let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
-  in
-
-  let add_terminal builder instr =
-      match L.block_terminator (L.insertion_block builder) with
-        Some _ -> ()
-			| None -> ignore (instr builder) in
-
   in
 
   let lookup s =
@@ -138,8 +130,10 @@ let translate stmts =
           raise (Failure ("incorrect # of arguments passed"))
         else let args1 = Array.map (build_expr builder) args in
         L.build_call callee args1 "call_func" builder
-      | SAccess(id, e) -> (* TODO *)
-      | SSlice(id, e1, e1) -> (* TODO *)
+      (* TODO:
+      | SAccess(id, e) ->
+      | SSlice(id, e1, e1) ->
+      *)
 
   in
 
@@ -194,7 +188,7 @@ let translate stmts =
           let b' = build_stmt b the_function st in
           build_body b' tail
       in
-      ignore(build_body (L.builder_at_end context then_bb) body)); (* generate code starting at end of then_bb *)
+      ignore(build_body (L.builder_at_end context then_bb) body); (* generate code starting at end of then_bb *)
       let end_bb = L.append_block context "if_end" the_function in
       let build_br_end = L.build_br end_bb in (* builds a branch to end_bb *)
       let rec build_dstmts b f = function
@@ -251,12 +245,12 @@ let translate stmts =
         | [] -> []
         | _ as st :: tail ->
           let b' = build_stmt b the_function st in
-          build_body b' body
+          build_body b' tail
       in
       ignore(build_body (L.builder_at_end context body_bb) body); (* build body inside of body_bb *)
       let body_builder = L.builder_at_end context body_bb in
-      let val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
-      let next_val = L.build_add val (L.const_int i32_t 1) "next_val" body_builder in (* increment iterator value by 1 *)
+      let tmp_val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
+      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in (* increment iterator value by 1 *)
       ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
       ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
       let end_bb = L.append_block context the_function in
@@ -303,7 +297,7 @@ let translate stmts =
   	| SPass -> (* TODO *)
       builder
 
-  in
+  in (* TODO: build return for main_function *)
 
   List.iter (build_stmt builder main_function) stmts;
   the_module
