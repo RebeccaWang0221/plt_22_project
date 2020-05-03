@@ -31,16 +31,14 @@ let translate stmts =
     | A.Char -> i8_t
     | A.Void -> void_t
   in
-
-  let main_ft = L.function_type i32_t [||] in
-  let main_function = L.define_function "main" main_ft the_module
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
-
-  in
+  let main_ft = L.function_type i32_t [||] in
+  let main_function = L.define_function "main" main_ft the_module in
 
   let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
+
   in
 
   let lookup s =
@@ -297,7 +295,9 @@ let translate stmts =
   	| SPass -> (* TODO *)
       builder
 
-  in (* TODO: build return for main_function *)
+  in
 
   List.iter (build_stmt builder main_function) stmts;
+  let main_end = L.append_block context main_function in
+  ignore(L.build_ret (L.const_int i32_t 0) (L.builder_at_end main_end));
   the_module
