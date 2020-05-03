@@ -268,6 +268,14 @@ let translate stmts =
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
+      (*
+      match e with
+        | (Int, _) ->
+        | (String, _) ->
+        | (Bool, _) ->
+        | (Float, _) ->
+        | (Char, _) ->
+      *)
       builder
   	| SCont -> builder
   	| SBreak -> builder
