@@ -3,7 +3,7 @@ Commands to Run (Mac OSX):
     Environment Setup Commands:
         
         eval $(opam config env)
-        export PATH="/usr/local/Cellar/llvm/9.0.1/bin:$PATH
+        export PATH="/usr/local/Cellar/llvm/9.0.1/bin:$PATH"
 
     Run Commands:
 
