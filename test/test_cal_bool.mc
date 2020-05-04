@@ -10,10 +10,17 @@ def bool or_op(bool x, bool y){
   return ans;
 }
 
+def bool not_op(bool x){
+  bool ans;
+  ans = !x;
+  return ans;
+}
+
 print(and_op(true, true));
 print(and_op(false, false));
 print(and_op(true, false);
 print(or_op(true, false));
 print(or_op(false, false));
+print(not_op(false));
 
 
