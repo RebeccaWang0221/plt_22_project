@@ -32,21 +32,22 @@ let translate stmts =
     | Ast.Char -> i8_t
     | Ast.Void -> void_t
   in
+
+  let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module
+
+  in
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module in
-(*
+
+  let builder = L.builder_at_end context (L.entry_block main_function) in
+
   let int_format_str = L.build_global_stringptr "%d\n" "int_fmt" builder in
   let str_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
   let float_format_str = L.build_global_stringptr "%f\n" "str_fmt" builder in
   let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
   let bool_format_str = L.build_global_stringptr "%c\n" "bool_fmt" builder in
-*)
-  let print_func =
-    let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-    L.declare_function "print_func" ft the_module
-
-  in
 
   let lookup s =
     try Hashtbl.find local_vars s with (* check if s is a local variable *)
@@ -141,7 +142,7 @@ let translate stmts =
   in
 
   let rec build_body b f = function
-    | [] -> []
+    | [] -> b
     | _ as st :: tail ->
       let b' = build_stmt b f st in
       build_body b' f tail
@@ -172,7 +173,10 @@ let translate stmts =
 
     and build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
-    | SBind(ty, id) -> ignore(L.declare_global (ltype_of_typ ty) id the_module); builder (* add variable to global scope aka the_module *)
+    | SBind(ty, id) ->
+      ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
+      ignore(L.build_alloca (ltype_of_typ ty) id builder);
+      builder
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
@@ -184,28 +188,27 @@ let translate stmts =
       let ft = L.function_type (ltype_of_typ func_def.srtyp) params in (* define function type of return type and parameters *)
       let f = (* declare the function in the module *)
         match L.lookup_function name the_module with
-          | None -> L.declare_function name ft the_module
+          | None -> L.define_function name ft the_module
           | Some f -> raise (Failure ("function " ^ name ^ " is already defined"))
       in
+      let func_builder = L.builder_at_end context (L.entry_block f) in
       let add_formal (t, n) p =
         L.set_value_name n p;
-        let local = L.build_alloca (ltype_of_typ t) n builder in
-        ignore(L.build_store p local builder);
+        let local = L.build_alloca (ltype_of_typ t) n func_builder in
+        ignore(L.build_store p local func_builder);
         Hashtbl.add local_vars n local;
       and add_local (t, n) =
-        let local_var = L.build_alloca (ltype_of_typ t) n builder in
+        let local_var = L.build_alloca (ltype_of_typ t) n func_builder in
         Hashtbl.add local_vars n local_var;
       in
       List.iter2 add_formal func_def.sformals (Array.to_list (L.params f));
       List.iter add_local func_def.slocals;
-      let bb = L.append_block context "func_body" f in (* create entry point block for function *)
-      L.position_at_end bb builder;
-      ignore(build_body builder f func_def.sbody);
-      L.position_at_end bb builder;             (* position builder at the end of the function block *)
-      ignore(L.build_ret_void builder);         (* build a void return when function reaches end *)
-      L.builder_at_end context bb
+      let final_builder = build_body func_builder f func_def.sbody in
+      if func_def.srtyp = Void then ignore(L.build_ret_void final_builder);
+      builder
   	| SIf(e, body, dstmts) -> (* TEST *)
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
+      ignore (L.build_br entry builder);
       let cond = build_expr (L.builder_at_end context entry) e in
       let then_bb = L.append_block context "if_then" the_function in (* build block if conditional is true *)
       ignore(build_body (L.builder_at_end context then_bb) the_function body); (* generate code starting at end of then_bb *)
@@ -220,6 +223,7 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SWhile(e, body) -> (* TEST *)
       let entry_bb = L.append_block context "while_entry" the_function in (* build entry block *)
+      ignore (L.build_br entry_bb builder);
       let cond = build_expr (L.builder_at_end context entry_bb) e in (* build conditional inside of entry block *)
       let while_body = L.append_block context "while_body" the_function in
       ignore(build_body (L.builder_at_end context while_body) the_function body); (* build body inside of while_body block *)
@@ -273,31 +277,32 @@ let translate stmts =
       in
       ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
       let e' = build_expr builder e in
-      ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
+      let var = L.build_alloca (ltype_of_typ ty) id builder in
+      ignore(L.build_store e' var builder); builder (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
-    (*| SPrint(e) ->
+    | SPrint(e) ->
       (match e with
         | (Int, _) ->
           let e' = build_expr builder e in
-          ignore(L.build_call print_func [| int_format_str ; e' |] "print_int" builder);
+          ignore(L.build_call printf_func [| int_format_str ; e' |] "printf" builder);
           builder
         | (String, _) ->
           let e' = build_expr builder e in
-          ignore(L.build_call print_func [| str_format_str ; e' |] "print_str" builder);
+          ignore(L.build_call printf_func [| str_format_str ; e' |] "print_str" builder);
           builder
         | (Bool, _) ->
           let e' = build_expr builder e in
-          ignore(L.build_call print_func [| bool_format_str ; e' |] "print_bool" builder);
+          ignore(L.build_call printf_func [| bool_format_str ; e' |] "print_bool" builder);
           builder
         | (Float, _) ->
           let e' = build_expr builder e in
-          ignore(L.build_call print_func [| float_format_str ; e' |] "print_float" builder);
+          ignore(L.build_call printf_func [| float_format_str ; e' |] "print_float" builder);
           builder
         | (Char, _) ->
           let e' = build_expr builder e in
-          ignore(L.build_call print_func [| char_format_str ; e' |] "print_char" builder);
-          builder)*)
+          ignore(L.build_call printf_func [| char_format_str ; e' |] "print_char" builder);
+          builder)
   	| SCont -> builder
   	| SBreak -> builder
   	| SPass -> (* TODO *)
@@ -305,8 +310,14 @@ let translate stmts =
 
   in
 
-  List.map (build_stmt builder main_function) stmts;
-  let main_end = L.append_block context "main_end" main_function in
-  ignore(L.build_ret (L.const_int i32_t 0) (L.builder_at_end context main_end));
+  (*List.map (build_stmt builder main_function) stmts;*)
+  let rec build_all_stmts b the_function = function
+    | [] -> b
+    | _ as st :: tail ->
+      let b' = build_stmt b the_function st in
+      build_all_stmts b' the_function tail
+  in
+  let final_builder = build_all_stmts builder main_function stmts in
+  ignore (L.build_ret (L.const_int i32_t 0) final_builder);
 
   the_module
