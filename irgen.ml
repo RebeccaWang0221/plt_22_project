@@ -1,6 +1,7 @@
 module L = Llvm
 open Ast
 open Sast
+open Pretty
 
 (*
     *** Main concerns ***
@@ -34,13 +35,13 @@ let translate stmts =
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module in
-
+(*
   let int_format_str = L.build_global_stringptr "%d\n" "int_fmt" builder in
   let str_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
   let float_format_str = L.build_global_stringptr "%f\n" "str_fmt" builder in
   let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
   let bool_format_str = L.build_global_stringptr "%c\n" "bool_fmt" builder in
-
+*)
   let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
@@ -91,12 +92,16 @@ let translate stmts =
           		| Ast.Neq -> L.build_icmp L.Icmp.Ne
           		| _ -> raise (Failure ("invalid operation on type string"))
         	  ) e1' e1' "string_binop" builder
-        	| Ast.Bool ->
+        	| Ast.Bool -> (* TODO: make this compatible with comparing floats and ints *)
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
         	  (match op with
         	    | Ast.Eq -> L.build_icmp L.Icmp.Eq
         	    | Ast.Neq -> L.build_icmp L.Icmp.Ne
+              | Ast.Gt -> L.build_icmp L.Icmp.Sgt
+              | Ast.Lt -> L.build_icmp L.Icmp.Slt
+              | Ast.Gte -> L.build_icmp L.Icmp.Sge
+              | Ast.Lte -> L.build_icmp L.Icmp.Sle
         	    | Ast.And -> L.build_and
         	    | Ast.Or -> L.build_or
         	  ) e1' e2' "bool_binop" builder
@@ -109,12 +114,6 @@ let translate stmts =
           		| Ast.Div -> L.build_sdiv
           		| Ast.Mult-> L.build_mul
           		| Ast.Mod -> L.build_srem
-	            | Ast.Eq -> L.build_icmp L.Icmp.Eq
-	            | Ast.Neq -> L.build_icmp L.Icmp.Ne
-	            | Ast.Lt -> L.build_icmp L.Icmp.Slt
-	            | Ast.Gt -> L.build_icmp L.Icmp.Sgt
-	            | Ast.Lte -> L.build_icmp L.Icmp.Sle
-	            | Ast.Gte -> L.build_icmp L.Icmp.Sge
        		  ) e1' e2' "int_binop" builder)
       | SUnop(id, unop) ->
         let var = lookup id in
@@ -153,6 +152,7 @@ let translate stmts =
       let elif_entry = L.append_block context "elif_entry" f in (* create an elif entry point bb *)
       let cond1 = build_expr (L.builder_at_end context elif_entry) e in
       let elif_bb = L.append_block context "elif_then" f in (* create bb for elif body *)
+      ignore(L.move_block_after elif_bb end_bb);
       let res = build_dstmts b f end_bb tail in (* recursively build rest of dstmts from the bottom up *)
       if List.length res <> 0 then (* if there is dstmts following current elif, build conditional branch to other dstmts *)
         let next_bb = List.hd res in
@@ -160,11 +160,14 @@ let translate stmts =
         ignore(L.build_cond_br cond1 elif_bb next_bb (L.builder_at_end context elif_entry));
       else ignore(L.build_cond_br cond1 elif_bb end_bb (L.builder_at_end context elif_entry)); (* otherwise build conditional branch to end_bb *)
       ignore(build_body (L.builder_at_end context elif_bb) f body); (* build elif body *)
-      ignore(L.build_br end_bb (L.builder_at_end context elif_bb)); [elif_entry] (* build branch to end_bb inside elif body, then return entrypoint *)
+      ignore(L.build_br end_bb (L.builder_at_end context elif_bb)); (* build branch to end_bb inside elif body, then return entrypoint *)
+      [elif_entry]
     | SElse(body) :: tail -> (* there is always only one else at the very end *)
       let bb = L.append_block context "else" f in (* create bb for else body *)
       ignore(build_body (L.builder_at_end context bb) f body);
-      ignore(L.build_br end_bb (L.builder_at_end context bb)); [bb] (* build branch to end_bb inside else body, then return bb *)
+      ignore(L.build_br end_bb (L.builder_at_end context bb)); (* build branch to end_bb inside else body, then return bb *)
+      ignore(L.move_block_after bb end_bb);
+      [bb]
     | _ -> raise (Failure ("invalid dangling statement in if"))
 
     and build_stmt builder the_function = function
@@ -273,8 +276,8 @@ let translate stmts =
       ignore(L.build_store e' (lookup id) builder); builder (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
-    | SPrint(e) ->
-      match e with
+    (*| SPrint(e) ->
+      (match e with
         | (Int, _) ->
           let e' = build_expr builder e in
           ignore(L.build_call print_func [| int_format_str ; e' |] "print_int" builder);
@@ -294,7 +297,7 @@ let translate stmts =
         | (Char, _) ->
           let e' = build_expr builder e in
           ignore(L.build_call print_func [| char_format_str ; e' |] "print_char" builder);
-          builder
+          builder)*)
   	| SCont -> builder
   	| SBreak -> builder
   	| SPass -> (* TODO *)
@@ -305,4 +308,5 @@ let translate stmts =
   List.map (build_stmt builder main_function) stmts;
   let main_end = L.append_block context "main_end" main_function in
   ignore(L.build_ret (L.const_int i32_t 0) (L.builder_at_end context main_end));
+
   the_module
