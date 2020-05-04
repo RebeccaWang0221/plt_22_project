@@ -1,6 +1,10 @@
 
 List of TODOs that need implementing:
 
+	Bugs:
+		- need a CHARLIT for assignment --> char x = 'h'
+		- mixed type comparisons and operations
+
 	Necessities:
 
 		- list, arrays, and structs
@@ -14,6 +18,7 @@ List of TODOs that need implementing:
 
 		- implement ** (exponent) operator in parser
 		- higher order functions
+
 
 Next Steps:
 
