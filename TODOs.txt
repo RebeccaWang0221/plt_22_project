@@ -1,6 +1,9 @@
 
 List of TODOs that need implementing:
 
+	Bugs:
+		- need a CHARLIT for assignment --> char x = 'h'
+
 	Necessities:
 
 		- list, arrays, and structs
