@@ -15,6 +15,7 @@ List of TODOs that need implementing:
 		- implement ** (exponent) operator in parser
 		- higher order functions
 
+
 Next Steps:
 
 	1) test basic code as it currently stands and fix bugs
