@@ -35,6 +35,12 @@ let translate stmts =
   let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module in
 
+  let int_format_str = L.build_global_stringptr "%d\n" "int_fmt" builder in
+  let str_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
+  let float_format_str = L.build_global_stringptr "%f\n" "str_fmt" builder in
+  let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
+  let bool_format_str = L.build_global_stringptr "%c\n" "bool_fmt" builder in
+
   let print_func =
     let ft = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
     L.declare_function "print_func" ft the_module
@@ -268,15 +274,27 @@ let translate stmts =
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
-      (*
       match e with
         | (Int, _) ->
+          let e' = build_expr builder e in
+          ignore(L.build_call print_func [| int_format_str ; e' |] "print_int" builder);
+          builder
         | (String, _) ->
+          let e' = build_expr builder e in
+          ignore(L.build_call print_func [| str_format_str ; e' |] "print_str" builder);
+          builder
         | (Bool, _) ->
+          let e' = build_expr builder e in
+          ignore(L.build_call print_func [| bool_format_str ; e' |] "print_bool" builder);
+          builder
         | (Float, _) ->
+          let e' = build_expr builder e in
+          ignore(L.build_call print_func [| float_format_str ; e' |] "print_float" builder);
+          builder
         | (Char, _) ->
-      *)
-      builder
+          let e' = build_expr builder e in
+          ignore(L.build_call print_func [| char_format_str ; e' |] "print_char" builder);
+          builder
   	| SCont -> builder
   	| SBreak -> builder
   	| SPass -> (* TODO *)
