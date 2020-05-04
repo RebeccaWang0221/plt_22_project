@@ -1,14 +1,25 @@
 
 List of TODOs that need implementing:
-	- list, arrays, and structs
-		- need to implement function calls in scanner, parser, and semant
-		- need to implement functionality in c++
-		- literals to be implemented (if time allows?).
-	- implement ** (exponent) operator in parser (This seems to have been resolved)
-		- keeps reporting shift/reduce conflicts for some reason
-	- irgen stage
-		- fill in TODOs
-	- gradual typing system
-	- higher order functions (if time permits)
 
-Questions:
+	Necessities:
+
+		- list, arrays, and structs
+			- need to implement function calls in scanner, parser, and semant
+			- need to implement functionality in c++
+			- literals to be implemented
+		- gradual typing system
+		- range loop that handles start index and step size
+
+	If time permits:
+
+		- implement ** (exponent) operator in parser
+		- higher order functions
+
+Next Steps:
+
+	1) test basic code as it currently stands and fix bugs
+		- Goal completion: Tuesday, May 5
+	2) once basics are working, add lists and structs with c++
+		- Goal completion: Thursday May 7
+	3) add gradual typing system
+		- Goal completion: Thursday, May 14
