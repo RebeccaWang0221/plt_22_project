@@ -3,6 +3,7 @@ List of TODOs that need implementing:
 
 	Bugs:
 		- need a CHARLIT for assignment --> char x = 'h'
+		- mixed type comparisons and operations
 
 	Necessities:
 
