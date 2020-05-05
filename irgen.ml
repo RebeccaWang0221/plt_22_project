@@ -86,18 +86,61 @@ let translate stmts =
           		| _ -> raise (Failure ("invalid operation on type string"))
         	  ) e1' e1' "string_binop" builder
         	| Ast.Bool -> (* TODO: make this compatible with comparing floats and ints *)
-        	  let e1' = build_expr builder e1
-        	  and e2' = build_expr builder e2 in
-        	  (match op with
-        	    | Ast.Eq -> L.build_icmp L.Icmp.Eq
-        	    | Ast.Neq -> L.build_icmp L.Icmp.Ne
-              | Ast.Gt -> L.build_icmp L.Icmp.Sgt
-              | Ast.Lt -> L.build_icmp L.Icmp.Slt
-              | Ast.Gte -> L.build_icmp L.Icmp.Sge
-              | Ast.Lte -> L.build_icmp L.Icmp.Sle
-        	    | Ast.And -> L.build_and
-        	    | Ast.Or -> L.build_or
-        	  ) e1' e2' "bool_binop" builder
+            let (t1, _) = e1
+            and (t2, _) = e2 in
+            match t1 with
+              | Int ->
+                (match t2 with
+                  | Int ->
+                    let e1' = build_expr builder e1
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_icmp L.Icmp.Eq
+                      | Ast.Neq -> L.build_icmp L.Icmp.Ne
+                      | Ast.Gt -> L.build_icmp L.Icmp.Sgt
+                      | Ast.Lt -> L.build_icmp L.Icmp.Slt
+                      | Ast.Gte -> L.build_icmp L.Icmp.Sge
+                      | Ast.Lte -> L.build_icmp L.Icmp.Sle
+                    ) e1' e2' "bool_binop" builder
+                  | Float ->
+                    let int_e1 = build_expr builder e1 in
+                    let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder)
+              | Float ->
+                (match t2 with
+                  | Float ->
+                    let e1' = build_expr builder e1
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder
+                  | Int ->
+                    let e1' = build_expr builder e1
+                    and int_e2 = build_expr builder e2 in
+                    let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder)
+              | Char -> raise (Failure ("not yet implemented"))
+              | String -> raise (Failure ("not yet implemented"))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
