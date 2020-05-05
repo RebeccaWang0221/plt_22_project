@@ -6,4 +6,4 @@ float b;
 a = 1;
 b = 3.9;
 
-a + b;
+float z = a + b;
