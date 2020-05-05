@@ -4,7 +4,7 @@ type sexpr = typ * sx
 and sx =
     SIntLit of int
   | SStrLit of string
-  | SBoolLit of bool 
+  | SBoolLit of bool
   | SFloatLit of float
   | SCharLit of char
   | SLstLit of expr list

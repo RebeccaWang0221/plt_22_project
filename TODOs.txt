@@ -1,6 +1,10 @@
 
 List of TODOs that need implementing:
 
+	Bugs:
+		- need a CHARLIT for assignment --> char x = 'h'
+		- mixed type comparisons and operations
+
 	Necessities:
 
 		- list, arrays, and structs
@@ -14,3 +18,13 @@ List of TODOs that need implementing:
 
 		- implement ** (exponent) operator in parser
 		- higher order functions
+
+
+Next Steps:
+
+	1) test basic code as it currently stands and fix bugs
+		- Goal completion: Tuesday, May 5
+	2) once basics are working, add lists and structs with c++
+		- Goal completion: Thursday May 7
+	3) add gradual typing system
+		- Goal completion: Thursday, May 14
