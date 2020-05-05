@@ -61,6 +61,7 @@ let check stmts vars funcs =
 	  	else
 	  	  let t = match op with
             | Add | Sub | Mult | Div | Exp when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Float
+						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
 	  	    | _ -> raise (Failure err)
 	  	  in
 	  	  (var_map, func_map, (t, SBinop((t1, e1), op, (t2, e2))))

@@ -18,4 +18,4 @@ def float div(float x, float y){
 print(add(3.2, 1.6));
 print(sub(3.2, 1.6));
 print(mul(3.2, 1.6));
-print(div(3.2, 1.6)));
+print(div(3.2, 1.6));

@@ -14,6 +14,7 @@ let translate stmts =
   let the_module = L.create_module context "RattleSnake" in
   let builder = L.builder context in
   let local_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 30 in
+  let global_vars:(string, L.llvalue) Hashtbl.t = Hashtbl.create 30 in
 
   (* get types from context *)
   let i32_t      = L.i32_type    context
@@ -29,8 +30,8 @@ let translate stmts =
     | Ast.Bool -> i1_t
     | Ast.Float -> float_t
     | Ast.String -> string_t
-    | Ast.Char -> i8_t
-    | Ast.Void -> void_t
+    | Ast.Char -> string_t
+    | Ast.Void -> i1_t
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -46,15 +47,12 @@ let translate stmts =
   let int_format_str = L.build_global_stringptr "%d\n" "int_fmt" builder in
   let str_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
   let float_format_str = L.build_global_stringptr "%f\n" "str_fmt" builder in
-  let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
-  let bool_format_str = L.build_global_stringptr "%c\n" "bool_fmt" builder in
+  let char_format_str = L.build_global_stringptr "%s\n" "char_fmt" builder in
+  let bool_format_str = L.build_global_stringptr "%d\n" "bool_fmt" builder in
 
   let lookup s =
     try Hashtbl.find local_vars s with (* check if s is a local variable *)
-      | Not_found ->
-        (match L.lookup_global s the_module with (* check if s is a global variable *)
-          | Some g -> g
-          | None -> raise (Failure ("undeclared variable")))
+      | Not_found -> Hashtbl.find global_vars s
 
   in
 
@@ -64,48 +62,123 @@ let translate stmts =
       | SStrLit s -> L.build_global_stringptr s "string" builder
       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | SFloatLit i -> L.const_float float_t i
-      | SCharLit c -> L.const_int i8_t (Char.code c)
+      | SCharLit c -> L.build_global_stringptr c "char" builder
       | SId s -> L.build_load (lookup s) s builder
-      | SBinop(e1, op, e2) -> (* TODO: going to need to handle case when adding different types, e.g. 2 + 5.5 *)
-      	  (match t with		    (* LLVM will throw an error when types do not match *)
-      	    | Ast.Float ->
-      	      let e1' = build_expr builder e1
-        	    and e2' = build_expr builder e2 in
-        	  (match op with
-          	  | Ast.Add -> L.build_fadd
-          		| Ast.Sub -> L.build_fsub
-          		| Ast.Div -> L.build_fdiv
-          		| Ast.Mult-> L.build_fmul
-          		| Ast.Mod -> L.build_frem
-	            | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
-	            | Ast.Neq -> L.build_fcmp L.Fcmp.One
-	            | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
-	            | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
-	            | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
-	            | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
-       		  ) e1' e2' "float_binop" builder
-      	    | Ast.String ->
-      	      let e1' = build_expr builder e1
-        	    and e2' = build_expr builder e2 in
-        	  (match op with
-          		| Ast.Add -> raise (Failure ("string concatenation not yet implemented"))
-          		| Ast.Eq -> L.build_icmp L.Icmp.Eq
-          		| Ast.Neq -> L.build_icmp L.Icmp.Ne
-          		| _ -> raise (Failure ("invalid operation on type string"))
-        	  ) e1' e1' "string_binop" builder
-        	| Ast.Bool -> (* TODO: make this compatible with comparing floats and ints *)
-        	  let e1' = build_expr builder e1
+      | SBinop(e1, op, e2) ->
+      	(match t with
+      	  | Ast.Float ->
+            let (t1, _) = e1
+            and (t2, _) = e2 in
+            (match t1 with
+              | Int ->
+                (match t2 with
+                  | Int ->
+                    let int_e1 = build_expr builder e1 in
+                    let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+                    and int_e2 = build_expr builder e2 in
+                    let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    (match op with
+                      | Ast.Add -> L.build_fadd
+                      | Ast.Sub -> L.build_fsub
+                      | Ast.Div -> L.build_fdiv
+                      | Ast.Mult-> L.build_fmul
+                    ) e1' e2' "float_binop" builder
+                  | Float ->
+                    let int_e1 = build_expr builder e1 in
+                    let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Add -> L.build_fadd
+                      | Ast.Sub -> L.build_fsub
+                      | Ast.Div -> L.build_fdiv
+                      | Ast.Mult-> L.build_fmul
+                    ) e1' e2' "float_binop" builder)
+              | Float ->
+                (match t2 with
+                  | Int ->
+                    let e1' = build_expr builder e1
+                    and int_e2 = build_expr builder e2 in
+                    let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    (match op with
+                      | Ast.Add -> L.build_fadd
+                      | Ast.Sub -> L.build_fsub
+                      | Ast.Div -> L.build_fdiv
+                      | Ast.Mult-> L.build_fmul
+                    ) e1' e2' "float_binop" builder
+                  | Float ->
+                    let e1' = build_expr builder e1
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Add -> L.build_fadd
+                      | Ast.Sub -> L.build_fsub
+                      | Ast.Div -> L.build_fdiv
+                      | Ast.Mult-> L.build_fmul
+                    ) e1' e2' "float_binop" builder))
+      	  | Ast.String ->
+      	    let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
-        	  (match op with
-        	    | Ast.Eq -> L.build_icmp L.Icmp.Eq
-        	    | Ast.Neq -> L.build_icmp L.Icmp.Ne
-              | Ast.Gt -> L.build_icmp L.Icmp.Sgt
-              | Ast.Lt -> L.build_icmp L.Icmp.Slt
-              | Ast.Gte -> L.build_icmp L.Icmp.Sge
-              | Ast.Lte -> L.build_icmp L.Icmp.Sle
-        	    | Ast.And -> L.build_and
-        	    | Ast.Or -> L.build_or
-        	  ) e1' e2' "bool_binop" builder
+          	(match op with
+            | Ast.Add -> raise (Failure ("string concatenation not yet implemented"))
+            | Ast.Eq -> L.build_icmp L.Icmp.Eq
+            | Ast.Neq -> L.build_icmp L.Icmp.Ne
+            | _ -> raise (Failure ("invalid operation on type string"))
+          	) e1' e1' "string_binop" builder
+        	| Ast.Bool ->
+            let (t1, _) = e1
+            and (t2, _) = e2 in
+            (match t1 with
+              | Int ->
+                (match t2 with
+                  | Int ->
+                    let e1' = build_expr builder e1
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_icmp L.Icmp.Eq
+                      | Ast.Neq -> L.build_icmp L.Icmp.Ne
+                      | Ast.Gt -> L.build_icmp L.Icmp.Sgt
+                      | Ast.Lt -> L.build_icmp L.Icmp.Slt
+                      | Ast.Gte -> L.build_icmp L.Icmp.Sge
+                      | Ast.Lte -> L.build_icmp L.Icmp.Sle
+                    ) e1' e2' "bool_binop" builder
+                  | Float ->
+                    let int_e1 = build_expr builder e1 in
+                    let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder)
+              | Float ->
+                (match t2 with
+                  | Float ->
+                    let e1' = build_expr builder e1
+                    and e2' = build_expr builder e2 in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder
+                  | Int ->
+                    let e1' = build_expr builder e1
+                    and int_e2 = build_expr builder e2 in
+                    let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    (match op with
+                      | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+                      | Ast.Neq -> L.build_fcmp L.Fcmp.One
+                      | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+                      | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+                      | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+                      | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+                    ) e1' e2' "bool_binop" builder)
+              | Char -> raise (Failure ("not yet implemented"))
+              | String -> raise (Failure ("not yet implemented")))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -174,8 +247,8 @@ let translate stmts =
     and build_stmt builder the_function = function
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) ->
-      ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
-      ignore(L.build_alloca (ltype_of_typ ty) id builder);
+      let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+      Hashtbl.add global_vars id pointer;
       builder
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
@@ -204,7 +277,8 @@ let translate stmts =
       List.iter2 add_formal func_def.sformals (Array.to_list (L.params f));
       List.iter add_local func_def.slocals;
       let final_builder = build_body func_builder f func_def.sbody in
-      if func_def.srtyp = Void then ignore(L.build_ret_void final_builder);
+      if func_def.srtyp = Void then ignore(L.build_ret (L.const_int i1_t 1) final_builder);
+      Hashtbl.clear local_vars;
       builder
   	| SIf(e, body, dstmts) -> (* TEST *)
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
@@ -234,10 +308,13 @@ let translate stmts =
   	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
       builder
   	| SRange(var, e, body) -> (* TEST *)
+      let SBind(t, n) = var in
       let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
+      Hashtbl.add local_vars n iterator;
       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
       let entry_bb = L.append_block context "range_entry" the_function in (* entry point *)
+      ignore(L.build_br entry_bb builder);
       let body_bb = L.append_block context "range_body" the_function in
       ignore(build_body (L.builder_at_end context body_bb) the_function body); (* build body inside of body_bb *)
       let body_builder = L.builder_at_end context body_bb in
@@ -275,10 +352,10 @@ let translate stmts =
         | SBind(t, e) -> (t, e)
         | _ -> raise (Failure ("invalid declaration"))
       in
-      ignore(L.declare_global (ltype_of_typ ty) id the_module); (* add variable to global scope aka the_module *)
       let e' = build_expr builder e in
-      let var = L.build_alloca (ltype_of_typ ty) id builder in
-      ignore(L.build_store e' var builder); builder (* build store function to load value into register *)
+      let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+      Hashtbl.add global_vars id pointer;
+      ignore(L.build_store e' pointer builder); builder (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->

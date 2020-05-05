@@ -1,7 +1,7 @@
 string s;
 s = "apple";
 
-if s == "apple"{
+if s == "apple" {
   print("apple");
 } else {
   print("banana");

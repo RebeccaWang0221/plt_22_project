@@ -1,0 +1,104 @@
+
+Implement python-like statements of the following forms :
+
+	Variable Declarations:
+		int:
+			int x;
+			int y = 5;
+
+		float:
+			float x;
+			float y = 0.5;
+
+		bool:
+			bool x;
+			bool y = true;
+
+		string:
+			string x;
+			string x = "hello";
+
+		char:
+			char x;
+			char x = 'a';
+
+
+	Function Declarations:
+
+		def foo(int x) {
+		    return x;
+		}
+
+	Control Flow:
+		if, elif, else: 
+			if x == 0 {
+				x = x + 1;
+			} elif x == 1 {
+			    x = x + 2;
+			} else {
+			    x = x + 3;
+			}
+
+		while:
+			while x < 5 {
+			    x += 1;
+			}
+
+		do-while:
+			do {
+			    x++;
+			} while x < 5;
+
+		for:
+			for int x = 0; x < 5; x++ {
+			    print(x);
+			}
+
+			for x in range(5) {
+			    print(x);
+			}
+
+	Built-in Types and Operations:
+		list:
+			list x;
+			list y = [1, 2, 3, 4];
+			print(y[1]);			// prints 1
+			print(y[1:3]);			// prints [2, 3]
+			y.append(5);			// y = [1, 2, 3, 4, 5]
+			y.remove(1);			// y = [1, 3, 4, 5]
+
+		struct:
+			struct x {
+			    int id;
+			    string name;
+			};
+
+			x.id = 5;
+			x.name = "Matt";
+
+	Other operations:
+		in:
+			string x = "hello";
+			if 'h' in x {
+			    print(x);
+			}
+
+		range:
+			for i in range(5) {		// prints 0 to 4
+			    print(i);
+			}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,9 +6,9 @@ type un = Not
 type expr =
     IntLit of int
   | StrLit of string
-  | BoolLit of bool 
+  | BoolLit of bool
   | FloatLit of float
-  | CharLit of char
+  | CharLit of string
   | ArrayLit of expr list
   | Id of string
   | Binop of expr * op * expr
