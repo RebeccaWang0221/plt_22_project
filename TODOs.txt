@@ -1,12 +1,43 @@
 
 List of TODOs that need implementing:
 
+	Next Steps:
+		1) test basic code as it currently stands and fix bugs
+			- Goal completion: Tuesday, May 5 (Completed)
+		2) once basics are working, add lists and structs with c++
+			- Goal completion: Thursday May 7
+		3) add gradual typing system
+			- Goal completion: Thursday, May 14
+
 	Bugs:
-		- need a CHARLIT for assignment --> char x = 'h'
-		- mixed type comparisons and operations
+		- operator /= does not work when assigning to an int bcz / results in a float
+		- need to implement string/char equality and inequality
+		- if_end block does not get terminator when inside of a function so an error occurs, only problematic if there
+		  is an else
+
+	Tests Passed:
+		- test_while.rs
+		- test_range.rs
+		- test_comparisons_and_ifs.rs
+		- test_comments.rs
+		- test_cal_float.rs
+		- test_cal_bool.rs
+		- fail_type_mixed.rs
+		- fail_type_mixed2.rs
+		- fail_assign.rs
+		- fail_assign2.rs
+		- test_cal_int.rs
+
+	Tests Failed:
+		- test_cal_string.rs
+				- need to implement == and != for strings and chars
+
+	Need to be tested:
+		- test_for.rs
+		- test_cont.rs
+		- test_break.rs
 
 	Necessities:
-
 		- list, arrays, and structs
 			- need to implement function calls in scanner, parser, and semant
 			- need to implement functionality in c++
@@ -18,13 +49,3 @@ List of TODOs that need implementing:
 
 		- implement ** (exponent) operator in parser
 		- higher order functions
-
-
-Next Steps:
-
-	1) test basic code as it currently stands and fix bugs
-		- Goal completion: Tuesday, May 5
-	2) once basics are working, add lists and structs with c++
-		- Goal completion: Thursday May 7
-	3) add gradual typing system
-		- Goal completion: Thursday, May 14
