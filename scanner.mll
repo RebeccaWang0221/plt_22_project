@@ -1,4 +1,6 @@
-{ open Parser }
+{ open Parser
+  open Pretty
+}
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
@@ -66,7 +68,8 @@ rule token = parse
   | "list"  { LIST }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
-  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
+  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(strip_str lem) }
+  | "'"letter"'" as lem  { CHARLIT(strip_char lem) }
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
