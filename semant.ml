@@ -49,7 +49,8 @@ let check stmts vars funcs =
 	  	    | Mult when t1 = Float -> Float
 	  	    | Exp when t1 = Int -> Int
 	  	    | Exp when t1 = Float -> Float
-	  	    | Div -> Float
+	  	    | Div when t1 = Float -> Float
+					| Div when t1 = Int -> Int
 	  	    | Mod -> Int
 	  	    | Eq | Neq -> Bool
 	  	    | Lt | Gt | Lte | Gte when t1 = Int -> Bool
@@ -278,9 +279,9 @@ let check stmts vars funcs =
 	    let SBind(t1, e1) = s
 	    and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
 	    let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
-		in
-		if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-		else raise (Failure err)
+			in
+			if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+			else raise (Failure err)
 
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in
@@ -294,6 +295,26 @@ let check stmts vars funcs =
 	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
 	    in
 	    (var_map, func_map, SPrint((t1, e1)))
+
+		| Append(id, v) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = match t1 with
+			  | List(t) -> t
+				| _ -> raise (Failure ("append needs to be called on a list type"))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map v in
+			if lst_typ <> t2 then raise (Failure ("cannot append value of type " ^ string_of_typ t2 ^ " to list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SAppend((t1, e1), (t2, e2)))
+
+		| Remove(id, v) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = (match t1 with
+				| List(t) -> t
+				| _ -> raise (Failure ("remove needs to be called on a list type")))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map v in
+			if lst_typ <> t2 then raise (Failure ("cannot remove value of type " ^ string_of_typ t2 ^ " from list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SRemove((t1, e1), (t2, e2)))
 
 	  | Cont -> (var_map, func_map, SCont)
 

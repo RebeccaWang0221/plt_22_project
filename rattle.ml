@@ -1,9 +1,12 @@
-type action = Ast | Sast | LLVM_IR
+open Printf
+open Sys
+
+type action = Ast | Sast | LLVM_IR | Exec
 
 module StringMap = Map.Make(String)
 
 let () =
-  let action = ref LLVM_IR in
+  let action = ref Exec in
   let set_action a () = action := a in
     let speclist = [
       ("-a", Arg.Unit (set_action Ast), "Print the AST");
@@ -25,3 +28,9 @@ let () =
           | Ast -> raise (Failure ("not yet impemented"))
           | Sast -> raise (Failure ("not yet impemented"))
           | LLVM_IR -> print_string (Llvm.string_of_llmodule (Irgen.translate sast))
+          | Exec ->
+            let llvm_module = Llvm.string_of_llmodule (Irgen.translate sast) in
+            let out = open_out "llvm.out" in
+            fprintf out "%s\n" llvm_module; close_out out;
+            ignore(command "llc -relocation-model=pic llvm.out");
+            ignore(command "g++ llvm.out.s -o a.out");

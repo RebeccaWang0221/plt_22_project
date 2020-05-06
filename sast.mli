@@ -31,6 +31,8 @@ type sstmt =
   | SDecAssign of sstmt * sexpr
   | SStruct of string * sstmt list
   | SPrint of sexpr
+  | SAppend of sexpr * sexpr
+  | SRemove of sexpr * sexpr
   | SCont
   | SBreak
   | SPass
