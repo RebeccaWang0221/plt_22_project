@@ -37,6 +37,8 @@ type stmt =
   | DecArr of stmt * expr list
   | Struct of string * stmt list
   | Print of expr
+  | Append of expr * expr
+  | Remove of expr * expr
   | Cont
   | Break
   | Pass
