@@ -22,6 +22,11 @@ let check stmts vars funcs =
 	  if lvt = rvt then lvt else raise (Failure (err))
 
 	in
+	(* check if the return value type and the assigned type are the same*)
+	let check_assign lvaluet rvaluet err =
+    if lvaluet = rvaluet then lvaluet else raise (Failure err)
+  in
+
 
 	let rec check_expr var_map func_map = function
 	  | IntLit l -> (var_map, func_map, (Int, SIntLit l)) (* return type bindings for literals *)

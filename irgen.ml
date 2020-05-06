@@ -6,6 +6,13 @@ open Pretty
 (*
     *** Main concerns ***
       - How to implement list, array, and struct???
+      - builder object is initialized on line 20, but is going to need to be updated and passed around so that we are inserting
+        block in the correct areas. For instance in build_stmt of microc, some stmts simply return builder, but others return
+        L.builder_at_end. Why is this and how do we ensure that builder is always pointing to the correct location? Does builder
+        get updated automatically when making LLVM calls?
+      - we want to treat the whole program script as a main function of sorts. So when making calls to append_block, should we
+        always use main_function (declared on line 42) or should this change depending on the specific instruction we are building
+      - need to make sure we clear local_vars when finished with loading the local variables of a function
 *)
 
 let translate stmts =
@@ -55,6 +62,28 @@ let translate stmts =
         (match L.lookup_global s the_module with (* check if s is a global variable *)
           | Some g -> g
           | None -> raise (Failure ("undeclared variable")))
+
+  in
+
+  let main_ft = L.function_type i1_t [||] in
+  let main_function = L.define_function "main" main_ft the_module
+  (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
+
+  in
+
+  let add_terminal builder instr =
+      match L.block_terminator (L.insertion_block builder) with
+        Some _ -> ()
+			| None -> ignore (instr builder) in
+
+  in
+
+  let lookup s =
+    try Hashtbl.find local_vars s with (* check if s is a local variable *)
+      | Not_found ->
+        match L.lookup_global s the_module with (* check if s is a global variable *)
+          | Some g -> g
+          | None -> raise (Failure ("undeclared variable"))
 
   in
 
