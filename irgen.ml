@@ -23,8 +23,15 @@ let translate stmts =
   and float_t    = L.double_type context
   and string_t   = L.pointer_type (L.i8_type context)
   and void_t     = L.void_type   context
-  in (* TODO: add list, array, and struct *)
+  in
 
+(* TODO: need to declare the list types but do not know what to put for body elements
+  let int_list_t = L.named_struct_type context "IntList" in
+  let bool_list_t = L.named_struct_type context "BoolList" in
+  let float_list_t = L.named_struct_type context "FloatList" in
+  let str_list_t = L.named_struct_type context "StrList" in
+  let char_list_t = L.named_struct_type context "CharList" in
+*)
   let ltype_of_typ = function
     | Ast.Int -> i32_t
     | Ast.Bool -> i1_t
@@ -35,9 +42,15 @@ let translate stmts =
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module
+  let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module in
 
+(* TODO: Need to declare functions, but waiting on previous TODO
+  let int_list_append_t : L.lltype = L.function_type (L.void_type context) [| i32_t |]
   in
+  let int_list_append : L.llvalue = L.declare_function "append" int_list_append_t the_module in
+  let int_list_remove : L.llvalue = L.declare_function "remove" int_list_remove_t the_module in
+*)
+
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module in
@@ -380,10 +393,13 @@ let translate stmts =
           let e' = build_expr builder e in
           ignore(L.build_call printf_func [| char_format_str ; e' |] "print_char" builder);
           builder)
-  	| SCont -> builder
-  	| SBreak -> builder
-  	| SPass -> (* TODO *)
+    | SAppend(e1, e2) ->
       builder
+    | SRemove(e1, e2) ->
+      builder
+  	| SCont -> builder (* TODO *)
+  	| SBreak -> builder (* TODO *)
+  	| SPass -> builder (* TODO *)
 
   in
 
