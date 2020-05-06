@@ -1,9 +1,11 @@
-{ open Parser }
+{ open Parser
+  open Pretty
+}
 
 let digit = ['0'-'9']
 let letter = ['a'-'z' 'A'-'Z']
 
-rule token = parse 
+rule token = parse
     [' ' '\t' '\r' '\n']  { token lexbuf }
   | "#!"			{ comment lexbuf }
   | "("  { LPAREN }
@@ -19,9 +21,9 @@ rule token = parse
   | "-"  { MINUS }
   | "/"  { DIVIDE }
   | "*"  { TIMES }
-  | "*""*"  { EXP }
-  | "++"  { INC }  
-  | "--"  { DEC }  
+  | "**"  { EXP }
+  | "++"  { INC }
+  | "--"  { DEC }
   | "%"  { MOD }
   | "+="  { PEQ }
   | "-="  { MEQ }
@@ -36,16 +38,16 @@ rule token = parse
   | "<="  { LTE }
   | "and"  { AND }
   | "or"  { OR }
-  | ("not" | "!")  { NOT }  
+  | ("not" | "!")  { NOT }
   | "."  { DOT }
   | "if"  { IF }
   | "else"  { ELSE }
   | "elif"  { ELIF }
-  | "in"  { IN }  
+  | "in"  { IN }
   | "for"  { FOR }
   | "while"  { WHILE }
   | "do"  { DO }
-  | "range"  { RANGE }  
+  | "range"  { RANGE }
   | "return"  { RETURN }
   | "break"  { BREAK }
   | "continue"  { CONT }
@@ -58,35 +60,20 @@ rule token = parse
   | "void"  { VOID }
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
-  | "list"  { LIST }  
-  | "struct"  { STCT } 
+  | "list"  { LIST }
+  | "struct"  { STCT }
   | "def"  { DEF }
   | "print"  { PRINT }
   | "array"  { ARRAY }
   | "list"  { LIST }
   | digit+ as lem  { INTLIT(int_of_string lem) }
   | digit*'.'digit+ as lem  { FLOATLIT(float_of_string lem) }
-  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(lem) } (* TODO: remove quotes from string *)
+  | '"'[^'"''\\']*('\\'_[^'"''\\']*)*'"' as lem  { STRLIT(strip_str lem) }
+  | "'"letter"'" as lem  { CHARLIT(strip_char lem) }
   | letter (digit | letter | '_')* as lem  { ID(lem) }
   | eof  { EOF }
   | _ as char  { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse
     "!#"  { token lexbuf }
-  | _  { comment lexbuf } 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  | _  { comment lexbuf }

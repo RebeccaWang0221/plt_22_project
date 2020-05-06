@@ -10,6 +10,7 @@
 %token <float> FLOATLIT
 %token <bool> BLIT
 %token <string> STRLIT
+%token <string> CHARLIT
 %token <string> ID
 %token EOF
 
@@ -41,7 +42,7 @@ stmt:
   | fdecl  { $1 }
   | array_decl  { $1 }
   | list_decl  { $1 }
-  | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, List.rev $6) }
+  | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
   | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $9) }
   | FOR vdecl IN expr LBRACE stmt_list RBRACE  { For($2, $4, $6) }
@@ -71,6 +72,7 @@ expr:
   | INTLIT  { IntLit($1) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
+  | CHARLIT  { CharLit($1) }
   | ID  { Id($1) }
   | expr PLUS expr  { Binop($1, Add, $3) }
   | expr MINUS expr  { Binop($1, Sub, $3) }
