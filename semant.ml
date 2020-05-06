@@ -49,7 +49,8 @@ let check stmts vars funcs =
 	  	    | Mult when t1 = Float -> Float
 	  	    | Exp when t1 = Int -> Int
 	  	    | Exp when t1 = Float -> Float
-	  	    | Div -> Float
+	  	    | Div when t1 = Float -> Float
+					| Div when t1 = Int -> Int
 	  	    | Mod -> Int
 	  	    | Eq | Neq -> Bool
 	  	    | Lt | Gt | Lte | Gte when t1 = Int -> Bool
