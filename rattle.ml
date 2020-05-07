@@ -33,4 +33,4 @@ let () =
             let out = open_out "llvm.out" in
             fprintf out "%s\n" llvm_module; close_out out;
             ignore(command "llc -relocation-model=pic llvm.out");
-            ignore(command "g++ llvm.out.s -o a.out");
+            ignore(command "gcc llvm.out.s -L. -lintlist -o a.out");
