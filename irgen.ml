@@ -25,8 +25,13 @@ let translate stmts =
   and void_t     = L.void_type   context
   in
 
-(* TODO: need to declare the list types but do not know what to put for body elements
+  let int_node_t = L.named_struct_type context "IntNode" in
+  let _ = L.struct_set_body int_node_t [| i32_t ; L.pointer_type int_node_t |] false in
+
   let int_list_t = L.named_struct_type context "IntList" in
+  let _ = L.struct_set_body int_list_t [| L.pointer_type int_node_t ; i32_t |] false in
+
+(* TODO: need to declare the list types but do not know what to put for body elements
   let bool_list_t = L.named_struct_type context "BoolList" in
   let float_list_t = L.named_struct_type context "FloatList" in
   let str_list_t = L.named_struct_type context "StrList" in
@@ -39,12 +44,26 @@ let translate stmts =
     | Ast.String -> string_t
     | Ast.Char -> string_t
     | Ast.Void -> i1_t
+    | Ast.List(Ast.Int) -> int_list_t
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module in
 
-(* TODO: Need to declare functions, but waiting on previous TODO
+  let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
+  let init_int_list : L.llvalue = L.declare_function "init_list" init_int_list_t the_module in
+
+  let print_int_list : L.llvalue = L.declare_function "print_list" init_int_list_t the_module in
+
+  let append_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t |] in
+  let append_int : L.llvalue = L.declare_function "append" append_int_t the_module in
+
+  let remove_int : L.llvalue = L.declare_function "remove_val" append_int_t the_module in
+
+  let get_int_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t ; i32_t |] in
+  let get_int : L.llvalue = L.declare_function "get" get_int_t the_module in
+
+(* TODO: Need to declare functions
   let int_list_append_t : L.lltype = L.function_type (L.void_type context) [| i32_t |]
   in
   let int_list_append : L.llvalue = L.declare_function "append" int_list_append_t the_module in
@@ -220,8 +239,11 @@ let translate stmts =
           raise (Failure ("incorrect # of arguments passed"))
         else let args1 = Array.map (build_expr builder) args_arr in
         L.build_call callee args1 "call_func" builder
-      (* TODO:
       | SAccess(id, e) ->
+        let pointer = lookup id in
+        let idx = build_expr builder e in
+        L.build_call get_int [| pointer ; idx |] "" builder
+      (* TODO:
       | SSlice(id, e1, e1) ->
       *)
 
@@ -261,8 +283,13 @@ let translate stmts =
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) ->
       let pointer = L.build_alloca (ltype_of_typ ty) id builder in
-      Hashtbl.add global_vars id pointer;
-      builder
+      (match ty with
+        | List(t) ->
+          L.build_call init_int_list [| pointer |] "" builder;
+          Hashtbl.add global_vars id pointer;
+          builder
+        | _ -> Hashtbl.add global_vars id pointer;
+          builder)
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
@@ -392,10 +419,22 @@ let translate stmts =
         | (Char, _) ->
           let e' = build_expr builder e in
           ignore(L.build_call printf_func [| char_format_str ; e' |] "print_char" builder);
+          builder
+        | (List(t), SId(s)) ->
+          let pointer = lookup s in
+          L.build_call print_int_list [| pointer |] "" builder;
           builder)
     | SAppend(e1, e2) ->
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let value = build_expr builder e2 in
+      L.build_call append_int [| pointer ; value |] "" builder;
       builder
     | SRemove(e1, e2) ->
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let idx = build_expr builder e2 in
+      L.build_call remove_int [| pointer ; idx |] "" builder;
       builder
   	| SCont -> builder (* TODO *)
   	| SBreak -> builder (* TODO *)
@@ -403,7 +442,6 @@ let translate stmts =
 
   in
 
-  (*List.map (build_stmt builder main_function) stmts;*)
   let rec build_all_stmts b the_function = function
     | [] -> b
     | _ as st :: tail ->

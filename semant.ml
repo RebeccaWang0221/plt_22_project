@@ -292,6 +292,7 @@ let check stmts vars funcs =
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    let t = match t1 with
 	      | Int | Float | Bool | String | Char -> t1
+				| List x -> t1
 	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
 	    in
 	    (var_map, func_map, SPrint((t1, e1)))
