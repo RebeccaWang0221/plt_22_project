@@ -9,7 +9,7 @@
 
 #    Run Commands:
 
-        ocamlbuild -pkgs llvm rattle.native
+        ocamlbuild -pkgs llvm -use-ocamlfind rattle.native
         ./rattle.native -l program-file.rs > example.out
         lli example.out
 

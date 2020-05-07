@@ -76,7 +76,7 @@ let translate stmts =
         Some _ -> ()
 			| None -> ignore (instr builder) in
 
-  in
+(*  in*)
 
   let lookup s =
     try Hashtbl.find local_vars s with (* check if s is a local variable *)
