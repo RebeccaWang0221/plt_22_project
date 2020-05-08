@@ -89,41 +89,30 @@ let check stmts vars funcs =
 	  	(var_map, func_map, (fd.srtyp, SCall(fname, args')))
 
 	  | Access(var, ex) -> (* ensure var is of list or array type and ex results in an int *)
-	    let t1 = type_of_var var_map var
+	    let (_, _, (t1, e1)) = check_expr var_map func_map var
 	    and (_, _, (t2, e2)) = check_expr var_map func_map ex in
 	    if t2 = Int then
 	      match t1 with
-	        | List(ty) -> (var_map, func_map, (ty, SAccess(var, (t2, e2))))
-	        | Array(ty, e) -> (var_map, func_map, (ty, SAccess(var, (t2, e2))))
+	        | List(ty) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
+	        | Array(ty, e) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
 	        | _ -> raise (Failure ("invalid access on non list/array type"))
-		else raise (Failure ("list/array access index must be of type int"))
-
-	  | Slice(var, ex1, ex2) -> (* ensure var is of list or array type and ex1 and ex2 result in int *)
-	    let t1 = type_of_var var_map var
-	    and (_, _, (t2, e2)) = check_expr var_map func_map ex1
-	    and (_, _, (t3, e3)) = check_expr var_map func_map ex2 in
-	    if (t2 = Int && t3 = Int) then
-	      match t1 with
-	        | List(ty) -> (var_map, func_map, (t1, (SSlice(var, (t2, e2), (t3, e3)))))
-	        | Array(ty, e) -> (var_map, func_map, (t1, (SSlice(var, (t2, e2), (t3, e3)))))
-	        | _ -> raise (Failure ("invalid slice on non list/array type"))
-	    else raise (Failure ("list/array slice indices must be of type int"))
+			else raise (Failure ("list/array access index must be of type int"))
 
 		| Index(id, e) ->
 		  let (_, _, (t1, e1)) = check_expr var_map func_map id
 			and (_, _, (t2, e2)) = check_expr var_map func_map e in
-			if t2 = Int then
-			  match t1 with
-				  | List(ty) -> (var_map, func_map, (t2, SIndex((t1, e1), (t2, e2))))
-					| _ -> raise (Failure ("index must be called on list type"))
-			else raise (Failure ("index must be of type int"))
+		  (match t1 with
+			  | List(ty) ->
+				  if t2 <> ty then raise (Failure ("expected expression of type " ^ string_of_typ ty ^ " but got expression of type " ^ string_of_typ t2))
+					else  (var_map, func_map, (Int, SIndex((t1, e1), (t2, e2))))
+				| _ -> raise (Failure ("index must be called on list type")))
 
 		| Pop(id, e) ->
 			let (_, _, (t1, e1)) = check_expr var_map func_map id
 			and (_, _, (t2, e2)) = check_expr var_map func_map e in
 			if t2 = Int then
 				match t1 with
-					| List(ty) -> (var_map, func_map, (t2, SPop((t1, e1), (t2, e2))))
+					| List(ty) -> (var_map, func_map, (ty, SPop((t1, e1), (t2, e2))))
 					| _ -> raise (Failure ("pop must be called on list type"))
 			else raise (Failure ("index must be of type int"))
 
@@ -327,12 +316,12 @@ let check stmts vars funcs =
 
 		| Remove(id, v) ->
 			let (_, _, (t1, e1)) = check_expr var_map func_map id in
-			let lst_typ = (match t1 with
+			let _ = (match t1 with
 				| List(t) -> t
 				| _ -> raise (Failure ("remove needs to be called on a list type")))
 			in
 			let (_, _, (t2, e2)) = check_expr var_map func_map v in
-			if lst_typ <> t2 then raise (Failure ("cannot remove value of type " ^ string_of_typ t2 ^ " from list of type " ^ string_of_typ lst_typ))
+			if t2 <> Int then raise (Failure ("got expression of type " ^ string_of_typ t2 ^ " but expected expression of type int"))
 			else (var_map, func_map, SRemove((t1, e1), (t2, e2)))
 
 		| Insert(id, idx, v) ->

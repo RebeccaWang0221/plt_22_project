@@ -19,6 +19,7 @@
 %type <Ast.program> program
 
 %right ASSIGN
+%nonassoc LBRACK
 %left OR
 %left AND
 %left EQ NEQ
@@ -94,10 +95,9 @@ expr:
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
-  | ID LBRACK expr RBRACK  { Access($1, $3) }
+  | expr LBRACK expr RBRACK  { Access($1, $3) }
   | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
   | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }
-  | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 
 typ:
     INT  { Int }
