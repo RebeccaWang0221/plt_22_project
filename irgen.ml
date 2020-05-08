@@ -42,7 +42,7 @@ let translate stmts =
     | Ast.String -> string_t
     | Ast.Char -> string_t
     | Ast.Void -> i1_t
-    | Ast.List(Ast.Int) -> int_list_t
+    | Ast.List(Ast.Int) | Ast.List(Ast.Bool) -> int_list_t
     | Ast.List(Ast.Float) -> float_list_t
     | Ast.List(Ast.String) | Ast.List(Ast.Char) -> str_list_t
   in
@@ -293,7 +293,7 @@ let translate stmts =
         let pointer = lookup s in
         let idx = build_expr builder e in
         (match t with
-          | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+          | Int | Bool -> L.build_call get_int [| pointer ; idx |] "" builder
           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
       | SIndex(id, e) ->
@@ -302,6 +302,7 @@ let translate stmts =
         let v = build_expr builder e in
         (match t with
           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+          | Bool -> L.build_call index_of_int [| pointer ; (L.const_intcast v i32_t false) |] "" builder
           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
       | SPop(id, e) ->
@@ -309,7 +310,7 @@ let translate stmts =
         let pointer = lookup s in
         let v = build_expr builder e in
         (match t with
-          | Int -> L.build_call pop_int [| pointer; v |] "" builder
+          | Int | Bool -> L.build_call pop_int [| pointer; v |] "" builder
           | Float -> L.build_call pop_float [| pointer; v |] "" builder
           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
 
@@ -352,7 +353,7 @@ let translate stmts =
       (match ty with
         | List(t) ->
           (match t with
-          | Int ->
+          | Int | Bool ->
             L.build_call init_int_list [| pointer |] "" builder;
             Hashtbl.add global_vars id pointer;
             builder
@@ -499,7 +500,7 @@ let translate stmts =
         | (List(t), SId(s)) ->
           let pointer = lookup s in
           match t with
-            | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+            | Int | Bool -> L.build_call print_int_list [| pointer |] "" builder; builder
             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
     | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
@@ -508,6 +509,7 @@ let translate stmts =
       let value = build_expr builder e2 in
       (match t with
         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+        | Bool -> L.build_call append_int [| pointer ; (L.const_intcast value i32_t false) |] "" builder; builder
         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
     | SRemove(e1, e2) ->
@@ -515,7 +517,7 @@ let translate stmts =
       let pointer = lookup s in
       let idx = build_expr builder e2 in
       (match t with
-        | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+        | Int | Bool -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
     | SInsert(e1, e2, e3) ->
@@ -525,6 +527,7 @@ let translate stmts =
       let v = build_expr builder e3 in
       (match t with
         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+        | Bool -> L.build_call insert_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder; builder
         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
   	| SCont -> builder (* TODO *)
