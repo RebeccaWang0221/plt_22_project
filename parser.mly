@@ -5,7 +5,7 @@
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token ARRAY LIST STCT DEF RANGE
-%token APPEND REMOVE
+%token APPEND REMOVE INSERT POP INDEX
 %token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -25,8 +25,9 @@
 %left LT GT LTE GTE
 %left PLUS MINUS
 %right PEQ MEQ
-%left DIVIDE TIMES MOD
+%left DIVIDE TIMES MOD EXP
 %right DEQ TEQ
+%left DOT
 
 %%
 
@@ -87,13 +88,15 @@ expr:
   | expr GT expr  { Binop($1, Gt, $3) }
   | expr LTE expr  { Binop($1, Lte, $3) }
   | expr GTE expr  { Binop($1, Gte, $3) }
-  /*| expr EXP expr  { Binop($1, Exp, $3) }*/
+  | expr EXP expr  { Binop($1, Exp, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
   | ID LBRACK expr RBRACK  { Access($1, $3) }
+  | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
+  | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }
   | ID LBRACK expr COLON expr RBRACK  { Slice($1, $3, $5) }
 
 typ:
@@ -137,5 +140,6 @@ list_decl:
     LIST LT typ GT ID  { Bind(List($3), $5) }
 
 list_funcs:
-    expr DOT APPEND expr SEMI  { Append($1, $4) }
-  | expr DOT REMOVE expr SEMI  { Remove($1, $4) }
+    expr DOT APPEND LPAREN expr RPAREN SEMI  { Append($1, $5) }
+  | expr DOT REMOVE LPAREN expr RPAREN SEMI  { Remove($1, $5) }
+  | expr DOT INSERT LPAREN expr COMMA expr RPAREN SEMI  { Insert($1, $5, $7) }

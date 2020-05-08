@@ -109,6 +109,24 @@ let check stmts vars funcs =
 	        | _ -> raise (Failure ("invalid slice on non list/array type"))
 	    else raise (Failure ("list/array slice indices must be of type int"))
 
+		| Index(id, e) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map id
+			and (_, _, (t2, e2)) = check_expr var_map func_map e in
+			if t2 = Int then
+			  match t1 with
+				  | List(ty) -> (var_map, func_map, (t2, SIndex((t1, e1), (t2, e2))))
+					| _ -> raise (Failure ("index must be called on list type"))
+			else raise (Failure ("index must be of type int"))
+
+		| Pop(id, e) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id
+			and (_, _, (t2, e2)) = check_expr var_map func_map e in
+			if t2 = Int then
+				match t1 with
+					| List(ty) -> (var_map, func_map, (t2, SPop((t1, e1), (t2, e2))))
+					| _ -> raise (Failure ("pop must be called on list type"))
+			else raise (Failure ("index must be of type int"))
+
 	  | _ -> raise (Failure ("invalid expression"))
 
 	in
@@ -316,6 +334,18 @@ let check stmts vars funcs =
 			let (_, _, (t2, e2)) = check_expr var_map func_map v in
 			if lst_typ <> t2 then raise (Failure ("cannot remove value of type " ^ string_of_typ t2 ^ " from list of type " ^ string_of_typ lst_typ))
 			else (var_map, func_map, SRemove((t1, e1), (t2, e2)))
+
+		| Insert(id, idx, v) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = match t1 with
+				| List(t) -> t
+				| _ -> raise (Failure ("insert needs to be called on a list type"))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map idx in
+			if t2 <> Int then raise (Failure ("index must be of type int"))
+			else let (_, _, (t3, e3)) = check_expr var_map func_map v in
+			if lst_typ <> t3 then raise (Failure ("cannot insert value of type " ^ string_of_typ t2 ^ " to list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SInsert((t1, e1), (t2, e2), (t3, e3)))
 
 	  | Cont -> (var_map, func_map, SCont)
 

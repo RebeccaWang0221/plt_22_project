@@ -63,6 +63,9 @@ rule token = parse
   | "list"  { LIST }
   | "append"  { APPEND }
   | "remove"  { REMOVE }
+  | "insert"  { INSERT }
+  | "pop"  { POP }
+  | "index"  { INDEX }
   | "struct"  { STCT }
   | "def"  { DEF }
   | "print"  { PRINT }
