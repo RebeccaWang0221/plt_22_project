@@ -14,6 +14,7 @@ let string_of_op = function
   | Gte -> ">="
   | And -> "and"
   | Or -> "or"
+  | Exp -> "**"
 
 let rec string_of_typ = function
     Int -> "int"

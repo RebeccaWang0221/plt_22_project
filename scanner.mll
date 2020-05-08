@@ -61,6 +61,11 @@ rule token = parse
   | "true"  { BLIT(true) }
   | "false"  { BLIT(false) }
   | "list"  { LIST }
+  | "append"  { APPEND }
+  | "remove"  { REMOVE }
+  | "insert"  { INSERT }
+  | "pop"  { POP }
+  | "index"  { INDEX }
   | "struct"  { STCT }
   | "def"  { DEF }
   | "print"  { PRINT }

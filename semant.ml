@@ -49,7 +49,8 @@ let check stmts vars funcs =
 	  	    | Mult when t1 = Float -> Float
 	  	    | Exp when t1 = Int -> Int
 	  	    | Exp when t1 = Float -> Float
-	  	    | Div -> Float
+	  	    | Div when t1 = Float -> Float
+					| Div when t1 = Int -> Int
 	  	    | Mod -> Int
 	  	    | Eq | Neq -> Bool
 	  	    | Lt | Gt | Lte | Gte when t1 = Int -> Bool
@@ -107,6 +108,24 @@ let check stmts vars funcs =
 	        | Array(ty, e) -> (var_map, func_map, (t1, (SSlice(var, (t2, e2), (t3, e3)))))
 	        | _ -> raise (Failure ("invalid slice on non list/array type"))
 	    else raise (Failure ("list/array slice indices must be of type int"))
+
+		| Index(id, e) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map id
+			and (_, _, (t2, e2)) = check_expr var_map func_map e in
+			if t2 = Int then
+			  match t1 with
+				  | List(ty) -> (var_map, func_map, (t2, SIndex((t1, e1), (t2, e2))))
+					| _ -> raise (Failure ("index must be called on list type"))
+			else raise (Failure ("index must be of type int"))
+
+		| Pop(id, e) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id
+			and (_, _, (t2, e2)) = check_expr var_map func_map e in
+			if t2 = Int then
+				match t1 with
+					| List(ty) -> (var_map, func_map, (t2, SPop((t1, e1), (t2, e2))))
+					| _ -> raise (Failure ("pop must be called on list type"))
+			else raise (Failure ("index must be of type int"))
 
 	  | _ -> raise (Failure ("invalid expression"))
 
@@ -278,9 +297,9 @@ let check stmts vars funcs =
 	    let SBind(t1, e1) = s
 	    and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
 	    let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
-		in
-		if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-		else raise (Failure err)
+			in
+			if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+			else raise (Failure err)
 
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in
@@ -291,9 +310,42 @@ let check stmts vars funcs =
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    let t = match t1 with
 	      | Int | Float | Bool | String | Char -> t1
+				| List x -> t1
 	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
 	    in
 	    (var_map, func_map, SPrint((t1, e1)))
+
+		| Append(id, v) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = match t1 with
+			  | List(t) -> t
+				| _ -> raise (Failure ("append needs to be called on a list type"))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map v in
+			if lst_typ <> t2 then raise (Failure ("cannot append value of type " ^ string_of_typ t2 ^ " to list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SAppend((t1, e1), (t2, e2)))
+
+		| Remove(id, v) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = (match t1 with
+				| List(t) -> t
+				| _ -> raise (Failure ("remove needs to be called on a list type")))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map v in
+			if lst_typ <> t2 then raise (Failure ("cannot remove value of type " ^ string_of_typ t2 ^ " from list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SRemove((t1, e1), (t2, e2)))
+
+		| Insert(id, idx, v) ->
+			let (_, _, (t1, e1)) = check_expr var_map func_map id in
+			let lst_typ = match t1 with
+				| List(t) -> t
+				| _ -> raise (Failure ("insert needs to be called on a list type"))
+			in
+			let (_, _, (t2, e2)) = check_expr var_map func_map idx in
+			if t2 <> Int then raise (Failure ("index must be of type int"))
+			else let (_, _, (t3, e3)) = check_expr var_map func_map v in
+			if lst_typ <> t3 then raise (Failure ("cannot insert value of type " ^ string_of_typ t2 ^ " to list of type " ^ string_of_typ lst_typ))
+			else (var_map, func_map, SInsert((t1, e1), (t2, e2), (t3, e3)))
 
 	  | Cont -> (var_map, func_map, SCont)
 

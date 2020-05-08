@@ -14,6 +14,8 @@ and sx =
   | SCall of string * sexpr list
   | SAccess of string * sexpr
   | SSlice of string * sexpr * sexpr
+  | SIndex of sexpr * sexpr
+  | SPop of sexpr * sexpr
 
 type sstmt =
   | SExpr of sexpr
@@ -31,6 +33,9 @@ type sstmt =
   | SDecAssign of sstmt * sexpr
   | SStruct of string * sstmt list
   | SPrint of sexpr
+  | SAppend of sexpr * sexpr
+  | SRemove of sexpr * sexpr
+  | SInsert of sexpr * sexpr * sexpr
   | SCont
   | SBreak
   | SPass

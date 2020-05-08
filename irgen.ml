@@ -3,11 +3,6 @@ open Ast
 open Sast
 open Pretty
 
-(*
-    *** Main concerns ***
-      - How to implement list, array, and struct???
-*)
-
 let translate stmts =
   (* create the LLVM compilation module to which we will generate the code *)
   let context = L.global_context () in
@@ -23,8 +18,20 @@ let translate stmts =
   and float_t    = L.double_type context
   and string_t   = L.pointer_type (L.i8_type context)
   and void_t     = L.void_type   context
-  in (* TODO: add list, array, and struct *)
+  in
 
+  let int_node_t = L.named_struct_type context "IntNode" in
+  let _ = L.struct_set_body int_node_t [| i32_t ; L.pointer_type int_node_t |] false in
+
+  let int_list_t = L.named_struct_type context "IntList" in
+  let _ = L.struct_set_body int_list_t [| L.pointer_type int_node_t ; i32_t |] false in
+
+(* TODO: need to declare the list types but do not know what to put for body elements
+  let bool_list_t = L.named_struct_type context "BoolList" in
+  let float_list_t = L.named_struct_type context "FloatList" in
+  let str_list_t = L.named_struct_type context "StrList" in
+  let char_list_t = L.named_struct_type context "CharList" in
+*)
   let ltype_of_typ = function
     | Ast.Int -> i32_t
     | Ast.Bool -> i1_t
@@ -32,12 +39,42 @@ let translate stmts =
     | Ast.String -> string_t
     | Ast.Char -> string_t
     | Ast.Void -> i1_t
+    | Ast.List(Ast.Int) -> int_list_t
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
-  let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module
+  let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module in
 
-  in
+  (*
+    C-Linking: here we declare the C functions
+    Right now it only works on int list, but will make it work for all types
+    Essentially we need to define the type of each C function and then declare it in the module
+    when calling L.function_type, the params are:
+        L.function_type <return type> <array of parameters for function>
+    these must match the C function
+    Likewise when calling L.declare_function the first paramter needs to match the name of the C function
+  *)
+
+  let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
+  let init_int_list : L.llvalue = L.declare_function "init_list" init_int_list_t the_module in
+
+  let print_int_list : L.llvalue = L.declare_function "print_list" init_int_list_t the_module in
+
+  let append_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t |] in
+  let append_int : L.llvalue = L.declare_function "append" append_int_t the_module in
+
+  let remove_int : L.llvalue = L.declare_function "remove_val" append_int_t the_module in
+
+  let get_int_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t ; i32_t |] in
+  let get_int : L.llvalue = L.declare_function "get" get_int_t the_module in
+
+  let insert_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t ; i32_t |] in
+  let insert_int : L.llvalue = L.declare_function "insert_val" insert_int_t the_module in
+
+  let pop_int : L.llvalue = L.declare_function "pop" get_int_t the_module in
+
+  let index_of_int : L.llvalue = L.declare_function "index_of" get_int_t the_module in
+
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
   let main_function = L.define_function "main" main_ft the_module in
@@ -207,8 +244,21 @@ let translate stmts =
           raise (Failure ("incorrect # of arguments passed"))
         else let args1 = Array.map (build_expr builder) args_arr in
         L.build_call callee args1 "call_func" builder
-      (* TODO:
       | SAccess(id, e) ->
+        let pointer = lookup id in
+        let idx = build_expr builder e in
+        L.build_call get_int [| pointer ; idx |] "" builder (* C-Linking: here we call build_call on the C function *)
+      | SIndex(id, e) ->                                    (* we also need to pass in the parameters *)
+        let (_, SId(s)) = id in                             (* pointer in these cases represents the location on the stack *)
+        let pointer = lookup s in
+        let v = build_expr builder e in
+        L.build_call index_of_int [| pointer ; v |] "" builder
+      | SPop(id, e) ->
+        let (_, SId(s)) = id in
+        let pointer = lookup s in
+        let v = build_expr builder e in
+        L.build_call pop_int [| pointer; v |] "" builder
+      (* TODO:
       | SSlice(id, e1, e1) ->
       *)
 
@@ -248,8 +298,13 @@ let translate stmts =
     | SExpr(e) -> ignore(build_expr builder e); builder
     | SBind(ty, id) ->
       let pointer = L.build_alloca (ltype_of_typ ty) id builder in
-      Hashtbl.add global_vars id pointer;
-      builder
+      (match ty with
+        | List(t) ->
+          L.build_call init_int_list [| pointer |] "" builder;
+          Hashtbl.add global_vars id pointer;
+          builder
+        | _ -> Hashtbl.add global_vars id pointer;
+          builder)
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
@@ -379,15 +434,36 @@ let translate stmts =
         | (Char, _) ->
           let e' = build_expr builder e in
           ignore(L.build_call printf_func [| char_format_str ; e' |] "print_char" builder);
+          builder
+        | (List(t), SId(s)) ->
+          let pointer = lookup s in
+          L.build_call print_int_list [| pointer |] "" builder;
           builder)
-  	| SCont -> builder
-  	| SBreak -> builder
-  	| SPass -> (* TODO *)
+    | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let value = build_expr builder e2 in
+      L.build_call append_int [| pointer ; value |] "" builder;
       builder
+    | SRemove(e1, e2) ->
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let idx = build_expr builder e2 in
+      L.build_call remove_int [| pointer ; idx |] "" builder;
+      builder
+    | SInsert(e1, e2, e3) ->
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let idx = build_expr builder e2 in
+      let v = build_expr builder e3 in
+      L.build_call insert_int [| pointer ; idx ; v |] "" builder;
+      builder
+  	| SCont -> builder (* TODO *)
+  	| SBreak -> builder (* TODO *)
+  	| SPass -> builder (* TODO *)
 
   in
 
-  (*List.map (build_stmt builder main_function) stmts;*)
   let rec build_all_stmts b the_function = function
     | [] -> b
     | _ as st :: tail ->

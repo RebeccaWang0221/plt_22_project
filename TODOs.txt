@@ -10,10 +10,13 @@ List of TODOs that need implementing:
 			- Goal completion: Thursday, May 14
 
 	Bugs:
-		- operator /= does not work when assigning to an int bcz / results in a float
 		- need to implement string/char equality and inequality
 		- if_end block does not get terminator when inside of a function so an error occurs, only problematic if there
 		  is an else
+		- fix the warnings
+
+	Questions:
+		- How to implement string/char equality and inequality?
 
 	Tests Passed:
 		- test_while.rs
@@ -32,7 +35,7 @@ List of TODOs that need implementing:
 		- test_cal_string.rs
 				- need to implement == and != for strings and chars
 
-	Need to be tested:
+	Not yer tested:
 		- test_for.rs
 		- test_cont.rs
 		- test_break.rs
@@ -46,6 +49,5 @@ List of TODOs that need implementing:
 		- range loop that handles start index and step size
 
 	If time permits:
-
 		- implement ** (exponent) operator in parser
 		- higher order functions
