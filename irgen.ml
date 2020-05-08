@@ -3,11 +3,6 @@ open Ast
 open Sast
 open Pretty
 
-(*
-    *** Main concerns ***
-      - How to implement list, array, and struct???
-*)
-
 let translate stmts =
   (* create the LLVM compilation module to which we will generate the code *)
   let context = L.global_context () in
@@ -50,6 +45,16 @@ let translate stmts =
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module in
 
+  (*
+    C-Linking: here we declare the C functions
+    Right now it only works on int list, but will make it work for all types
+    Essentially we need to define the type of each C function and then declare it in the module
+    when calling L.function_type, the params are:
+        L.function_type <return type> <array of parameters for function>
+    these must match the C function
+    Likewise when calling L.declare_function the first paramter needs to match the name of the C function
+  *)
+
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_list" init_int_list_t the_module in
 
@@ -63,12 +68,12 @@ let translate stmts =
   let get_int_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t ; i32_t |] in
   let get_int : L.llvalue = L.declare_function "get" get_int_t the_module in
 
-(* TODO: Need to declare functions
-  let int_list_append_t : L.lltype = L.function_type (L.void_type context) [| i32_t |]
-  in
-  let int_list_append : L.llvalue = L.declare_function "append" int_list_append_t the_module in
-  let int_list_remove : L.llvalue = L.declare_function "remove" int_list_remove_t the_module in
-*)
+  let insert_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t ; i32_t |] in
+  let insert_int : L.llvalue = L.declare_function "insert_val" insert_int_t the_module in
+
+  let pop_int : L.llvalue = L.declare_function "pop" get_int_t the_module in
+
+  let index_of_int : L.llvalue = L.declare_function "index_of" get_int_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -242,7 +247,17 @@ let translate stmts =
       | SAccess(id, e) ->
         let pointer = lookup id in
         let idx = build_expr builder e in
-        L.build_call get_int [| pointer ; idx |] "" builder
+        L.build_call get_int [| pointer ; idx |] "" builder (* C-Linking: here we call build_call on the C function *)
+      | SIndex(id, e) ->                                    (* we also need to pass in the parameters *)
+        let (_, SId(s)) = id in                             (* pointer in these cases represents the location on the stack *)
+        let pointer = lookup s in
+        let v = build_expr builder e in
+        L.build_call index_of_int [| pointer ; v |] "" builder
+      | SPop(id, e) ->
+        let (_, SId(s)) = id in
+        let pointer = lookup s in
+        let v = build_expr builder e in
+        L.build_call pop_int [| pointer; v |] "" builder
       (* TODO:
       | SSlice(id, e1, e1) ->
       *)
@@ -424,7 +439,7 @@ let translate stmts =
           let pointer = lookup s in
           L.build_call print_int_list [| pointer |] "" builder;
           builder)
-    | SAppend(e1, e2) ->
+    | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
       let (_, SId(s)) = e1 in
       let pointer = lookup s in
       let value = build_expr builder e2 in
@@ -435,6 +450,13 @@ let translate stmts =
       let pointer = lookup s in
       let idx = build_expr builder e2 in
       L.build_call remove_int [| pointer ; idx |] "" builder;
+      builder
+    | SInsert(e1, e2, e3) ->
+      let (_, SId(s)) = e1 in
+      let pointer = lookup s in
+      let idx = build_expr builder e2 in
+      let v = build_expr builder e3 in
+      L.build_call insert_int [| pointer ; idx ; v |] "" builder;
       builder
   	| SCont -> builder (* TODO *)
   	| SBreak -> builder (* TODO *)
