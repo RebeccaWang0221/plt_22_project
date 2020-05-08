@@ -45,6 +45,7 @@ let check stmts vars funcs =
 	  	    | Add | Sub when t1 = Int -> Int
 	  	    | Add | Sub when t1 = Float -> Float
 	  	    | Add when t1 = String -> String
+					| Add when t1 = Char -> String
 	  	    | Mult when t1 = Int -> Int
 	  	    | Mult when t1 = Float -> Float
 	  	    | Exp when t1 = Int -> Int
@@ -62,6 +63,7 @@ let check stmts vars funcs =
 	  	else
 	  	  let t = match op with
             | Add | Sub | Mult | Div | Exp when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Float
+						| Add when ((t1 = String && t2 = Char) || (t1 = Char && t2 = String)) -> String
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
 	  	    | _ -> raise (Failure err)
 	  	  in

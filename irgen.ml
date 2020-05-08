@@ -63,6 +63,8 @@ let translate stmts =
   let str_cmp_t : L.lltype = L.function_type i32_t [| string_t ; string_t |] in
   let str_cmp : L.llvalue = L.declare_function "str_comp" str_cmp_t the_module in
   let str_diff : L.llvalue = L.declare_function "str_diff" str_cmp_t the_module in
+  let str_concat_t : L.lltype = L.function_type string_t [| string_t ; string_t |] in
+  let str_concat : L.llvalue = L.declare_function "str_concat" str_concat_t the_module in
 
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
@@ -172,11 +174,9 @@ let translate stmts =
       	    let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
           	(match op with
-              | Ast.Add -> raise (Failure ("string concatenation not yet implemented"))
-              | Ast.Eq -> L.build_icmp L.Icmp.Eq
-              | Ast.Neq -> L.build_icmp L.Icmp.Ne
+              | Ast.Add -> L.build_call str_concat [| e1' ; e2' |] "" builder
               | _ -> raise (Failure ("invalid operation on type string"))
-          	) e1' e1' "string_binop" builder
+          	)
         	| Ast.Bool ->
             let (t1, _) = e1
             and (t2, _) = e2 in
@@ -231,7 +231,13 @@ let translate stmts =
                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
-              | Char -> raise (Failure ("not yet implemented"))
+              | Char ->
+                let e1' = build_expr builder e1
+                and e2' = build_expr builder e2 in
+                (match op with
+                  | Ast.Eq -> L.build_call str_cmp [| e1' ; e2' |] "" builder
+                  | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
+                  | _ -> raise (Failure ("invalid comparison operation on chars")))
               | String ->
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in

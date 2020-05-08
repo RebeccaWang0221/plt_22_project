@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int str_comp(char *s1, char *s2) {
@@ -17,4 +18,12 @@ int str_diff(char *s1, char *s2) {
     } else {
         return 1;
     }
+}
+
+char *str_concat(char *s1, char *s2) {
+    int len = strlen(s1) + strlen(s2);
+    char *new_str = (char *)malloc(sizeof(char) * len);
+    strcpy(new_str, s1);
+    strcat(new_str, s2);
+    return new_str;
 }
