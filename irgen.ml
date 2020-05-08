@@ -22,9 +22,13 @@ let translate stmts =
 
   let int_node_t = L.named_struct_type context "IntNode" in
   let _ = L.struct_set_body int_node_t [| i32_t ; L.pointer_type int_node_t |] false in
-
   let int_list_t = L.named_struct_type context "IntList" in
   let _ = L.struct_set_body int_list_t [| L.pointer_type int_node_t ; i32_t |] false in
+
+  let float_node_t = L.named_struct_type context "FloatNode" in
+  let _ = L.struct_set_body float_node_t [| float_t ; L.pointer_type float_node_t |] false in
+  let float_list_t = L.named_struct_type context "FloatList" in
+  let _ = L.struct_set_body float_list_t [| L.pointer_type float_node_t ; float_t |] false in
 
 (* TODO: need to declare the list types but do not know what to put for body elements
   let bool_list_t = L.named_struct_type context "BoolList" in
@@ -40,6 +44,7 @@ let translate stmts =
     | Ast.Char -> string_t
     | Ast.Void -> i1_t
     | Ast.List(Ast.Int) -> int_list_t
+    | Ast.List(Ast.Float) -> float_list_t
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -56,24 +61,32 @@ let translate stmts =
   *)
 
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
-  let init_int_list : L.llvalue = L.declare_function "init_list" init_int_list_t the_module in
-
-  let print_int_list : L.llvalue = L.declare_function "print_list" init_int_list_t the_module in
-
+  let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
+  let print_int_list : L.llvalue = L.declare_function "print_int_list" init_int_list_t the_module in
   let append_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t |] in
-  let append_int : L.llvalue = L.declare_function "append" append_int_t the_module in
-
-  let remove_int : L.llvalue = L.declare_function "remove_val" append_int_t the_module in
-
+  let append_int : L.llvalue = L.declare_function "append_int" append_int_t the_module in
+  let remove_int : L.llvalue = L.declare_function "remove_int" append_int_t the_module in
   let get_int_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t ; i32_t |] in
-  let get_int : L.llvalue = L.declare_function "get" get_int_t the_module in
-
+  let get_int : L.llvalue = L.declare_function "get_int" get_int_t the_module in
   let insert_int_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; i32_t ; i32_t |] in
-  let insert_int : L.llvalue = L.declare_function "insert_val" insert_int_t the_module in
+  let insert_int : L.llvalue = L.declare_function "insert_int" insert_int_t the_module in
+  let pop_int : L.llvalue = L.declare_function "pop_int" get_int_t the_module in
+  let index_of_int : L.llvalue = L.declare_function "index_int" get_int_t the_module in
 
-  let pop_int : L.llvalue = L.declare_function "pop" get_int_t the_module in
-
-  let index_of_int : L.llvalue = L.declare_function "index_of" get_int_t the_module in
+  let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
+  let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
+  let print_float_list : L.llvalue = L.declare_function "print_float_list" init_float_list_t the_module in
+  let append_float_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t ; float_t |] in
+  let append_float : L.llvalue = L.declare_function "append_float" append_float_t the_module in
+  let remove_float_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t ; i32_t |] in
+  let remove_float : L.llvalue = L.declare_function "remove_float" remove_float_t the_module in
+  let get_float_t : L.lltype = L.function_type float_t [| L.pointer_type float_list_t ; i32_t |] in
+  let get_float : L.llvalue = L.declare_function "get_float" get_float_t the_module in
+  let insert_float_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t ; i32_t ; float_t |] in
+  let insert_float : L.llvalue = L.declare_function "insert_float" insert_float_t the_module in
+  let pop_float : L.llvalue = L.declare_function "pop_float" get_float_t the_module in
+  let index_of_float_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t ; float_t |] in
+  let index_of_float : L.llvalue = L.declare_function "index_float" index_of_float_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -245,22 +258,26 @@ let translate stmts =
         else let args1 = Array.map (build_expr builder) args_arr in
         L.build_call callee args1 "call_func" builder
       | SAccess(id, e) ->
-        let pointer = lookup id in
+        let (List(t), SId(s)) = id in
+        let pointer = lookup s in
         let idx = build_expr builder e in
-        L.build_call get_int [| pointer ; idx |] "" builder (* C-Linking: here we call build_call on the C function *)
-      | SIndex(id, e) ->                                    (* we also need to pass in the parameters *)
-        let (_, SId(s)) = id in                             (* pointer in these cases represents the location on the stack *)
+        (match t with
+          | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+          | Float -> L.build_call get_float [| pointer ; idx |] "" builder)
+      | SIndex(id, e) ->
+        let (List(t), SId(s)) = id in
         let pointer = lookup s in
         let v = build_expr builder e in
-        L.build_call index_of_int [| pointer ; v |] "" builder
+        (match t with
+          | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+          | Float -> L.build_call index_of_float [| pointer ; v |] "" builder)
       | SPop(id, e) ->
-        let (_, SId(s)) = id in
+        let (List(t), SId(s)) = id in
         let pointer = lookup s in
         let v = build_expr builder e in
-        L.build_call pop_int [| pointer; v |] "" builder
-      (* TODO:
-      | SSlice(id, e1, e1) ->
-      *)
+        (match t with
+          | Int -> L.build_call pop_int [| pointer; v |] "" builder
+          | Float -> L.build_call pop_float [| pointer; v |] "" builder)
 
   in
 
@@ -300,9 +317,15 @@ let translate stmts =
       let pointer = L.build_alloca (ltype_of_typ ty) id builder in
       (match ty with
         | List(t) ->
-          L.build_call init_int_list [| pointer |] "" builder;
-          Hashtbl.add global_vars id pointer;
-          builder
+          (match t with
+          | Int ->
+            L.build_call init_int_list [| pointer |] "" builder;
+            Hashtbl.add global_vars id pointer;
+            builder
+          | Float ->
+            L.build_call init_float_list [| pointer |] "" builder;
+            Hashtbl.add global_vars id pointer;
+            builder)
         | _ -> Hashtbl.add global_vars id pointer;
           builder)
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
@@ -437,27 +460,31 @@ let translate stmts =
           builder
         | (List(t), SId(s)) ->
           let pointer = lookup s in
-          L.build_call print_int_list [| pointer |] "" builder;
-          builder)
+          match t with
+            | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+            | Float -> L.build_call print_float_list [| pointer |] "" builder; builder)
     | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
-      let (_, SId(s)) = e1 in
+      let (List(t), SId(s)) = e1 in
       let pointer = lookup s in
       let value = build_expr builder e2 in
-      L.build_call append_int [| pointer ; value |] "" builder;
-      builder
+      (match t with
+        | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+        | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder)
     | SRemove(e1, e2) ->
-      let (_, SId(s)) = e1 in
+      let (List(t), SId(s)) = e1 in
       let pointer = lookup s in
       let idx = build_expr builder e2 in
-      L.build_call remove_int [| pointer ; idx |] "" builder;
-      builder
+      (match t with
+        | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+        | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder)
     | SInsert(e1, e2, e3) ->
-      let (_, SId(s)) = e1 in
+      let (List(t), SId(s)) = e1 in
       let pointer = lookup s in
       let idx = build_expr builder e2 in
       let v = build_expr builder e3 in
-      L.build_call insert_int [| pointer ; idx ; v |] "" builder;
-      builder
+      (match t with
+        | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+        | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder)
   	| SCont -> builder (* TODO *)
   	| SBreak -> builder (* TODO *)
   	| SPass -> builder (* TODO *)
