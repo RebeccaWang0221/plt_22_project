@@ -60,6 +60,10 @@ let translate stmts =
     Likewise when calling L.declare_function the first paramter needs to match the name of the C function
   *)
 
+  let str_cmp_t : L.lltype = L.function_type i32_t [| string_t ; string_t |] in
+  let str_cmp : L.llvalue = L.declare_function "str_comp" str_cmp_t the_module in
+  let str_diff : L.llvalue = L.declare_function "str_diff" str_cmp_t the_module in
+
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
   let print_int_list : L.llvalue = L.declare_function "print_int_list" init_int_list_t the_module in
@@ -168,10 +172,10 @@ let translate stmts =
       	    let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
           	(match op with
-            | Ast.Add -> raise (Failure ("string concatenation not yet implemented"))
-            | Ast.Eq -> L.build_icmp L.Icmp.Eq
-            | Ast.Neq -> L.build_icmp L.Icmp.Ne
-            | _ -> raise (Failure ("invalid operation on type string"))
+              | Ast.Add -> raise (Failure ("string concatenation not yet implemented"))
+              | Ast.Eq -> L.build_icmp L.Icmp.Eq
+              | Ast.Neq -> L.build_icmp L.Icmp.Ne
+              | _ -> raise (Failure ("invalid operation on type string"))
           	) e1' e1' "string_binop" builder
         	| Ast.Bool ->
             let (t1, _) = e1
@@ -228,7 +232,13 @@ let translate stmts =
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
               | Char -> raise (Failure ("not yet implemented"))
-              | String -> raise (Failure ("not yet implemented")))
+              | String ->
+                let e1' = build_expr builder e1
+                and e2' = build_expr builder e2 in
+                (match op with
+                  | Ast.Eq -> L.build_call str_cmp [| e1' ; e2' |] "" builder
+                  | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
+                  | _ -> raise (Failure ("invalid comparison operation on strings")))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -238,7 +248,7 @@ let translate stmts =
           		| Ast.Div -> L.build_sdiv
           		| Ast.Mult-> L.build_mul
           		| Ast.Mod -> L.build_srem
-       		  ) e1' e2' "int_binop" builder)
+       		  ) e1' e2' "int_binop" builder))
       | SUnop(id, unop) ->
         let var = lookup id in
         let var_val = L.build_load var "load" builder in
