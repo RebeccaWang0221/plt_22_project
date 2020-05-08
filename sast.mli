@@ -12,7 +12,7 @@ and sx =
   | SBinop of sexpr * op * sexpr
   | SUnop of string * un
   | SCall of string * sexpr list
-  | SAccess of string * sexpr
+  | SAccess of sexpr * sexpr
   | SSlice of string * sexpr * sexpr
   | SIndex of sexpr * sexpr
   | SPop of sexpr * sexpr

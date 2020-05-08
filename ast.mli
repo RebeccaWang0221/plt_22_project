@@ -14,8 +14,7 @@ type expr =
   | Binop of expr * op * expr
   | Unop of string * un
   | Call of string * expr list
-  | Access of string * expr
-  | Slice of string * expr * expr
+  | Access of expr * expr
   | Index of expr * expr
   | Pop of expr * expr
 
