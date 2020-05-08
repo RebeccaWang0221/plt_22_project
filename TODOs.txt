@@ -17,7 +17,6 @@ List of TODOs that need implementing:
 
 	Questions:
 		- How to implement string/char equality and inequality?
-		- How to declare c++ list type in llvm?
 
 	Tests Passed:
 		- test_while.rs

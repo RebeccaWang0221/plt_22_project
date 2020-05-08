@@ -16,6 +16,8 @@ type expr =
   | Call of string * expr list
   | Access of string * expr
   | Slice of string * expr * expr
+  | Index of expr * expr
+  | Pop of expr * expr
 
 type typ = Int | String | Bool | Float | Char | List of typ | Stct | Void | Array of typ * expr
 
@@ -39,6 +41,7 @@ type stmt =
   | Print of expr
   | Append of expr * expr
   | Remove of expr * expr
+  | Insert of expr * expr * expr
   | Cont
   | Break
   | Pass
