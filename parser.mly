@@ -48,7 +48,9 @@ stmt:
   | list_funcs  { $1 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
-  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $9) }
+  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, IntLit(0), $6, IntLit(1), $9) }
+  | FOR vdecl IN RANGE LPAREN expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, IntLit(1), $11) }
+  | FOR vdecl IN RANGE LPAREN expr COMMA expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, $10, $13) }
   | FOR vdecl IN expr LBRACE stmt_list RBRACE  { For($2, $4, $6) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
   | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }

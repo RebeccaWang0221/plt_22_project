@@ -256,16 +256,18 @@ let check stmts vars funcs =
 	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1)))
 	    in ret
 
-	  | Range(st1, ex, st2_lst) ->
+	  | Range(st1, e1, e2, e3, st2_lst) ->
 	  	let (m1, _, s1) = check_stmt var_map func_map st1 in
 	  	let SBind(t1, e1) = s1
-	  	and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
-	    let sst_lst = check_stmt_list m2 func_map st2_lst in
-	  	if t1 = t2 then
-	  	  match t1 with
-	  	    | _ when (t1 = Int && t2 = Int) -> (m2, func_map, SRange(s1, (t2, e2), sst_lst))
+	  	and (_, _, (t2, e2)) = check_expr m1 func_map e1
+			and (_, _, (t3, e3)) = check_expr m1 func_map e2
+			and (_, _, (t4, e4)) = check_expr m1 func_map e3 in
+	    let sst_lst = check_stmt_list m1 func_map st2_lst in
+	  	if t1 = Int then
+	  	  match t2 with
+	  	    | Int when (t3 = Int && t4 = Int) -> (m1, func_map, SRange(s1, (t2, e2), (t3, e3), (t4, e4), sst_lst))
 	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
-	  	else raise (Failure("for-range loop must be used with int types but given types do not match"))
+	  	else raise (Failure("for-range loop must be used with int types"))
 
 	  | Do(st_lst, ex) -> (var_map, func_map, SDo(check_stmt_list var_map func_map st_lst, check_bool_expr var_map func_map ex))
 

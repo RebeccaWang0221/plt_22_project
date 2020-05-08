@@ -424,9 +424,9 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
       builder
-  	| SRange(var, e, body) -> (* TEST *)
+  	| SRange(var, beg, ed, st, body) -> (* TEST *)
       let SBind(t, n) = var in
-      let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
+      let start_val = build_expr builder beg in (* create start val at 0 *)
       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
       Hashtbl.add local_vars n iterator;
       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
@@ -436,15 +436,16 @@ let translate stmts =
       ignore(build_body (L.builder_at_end context body_bb) the_function body); (* build body inside of body_bb *)
       let body_builder = L.builder_at_end context body_bb in
       let tmp_val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
-      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in (* increment iterator value by 1 *)
+      let next_val = L.build_add tmp_val (build_expr builder st) "next_val" body_builder in (* increment iterator value by 1 *)
       ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
       ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
       let end_bb = L.append_block context "range_end" the_function in
-      let end_val = build_expr builder e in
+      let end_val = build_expr builder ed in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
-      let cond = L.build_icmp L.Icmp.Eq curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
+      Hashtbl.clear local_vars;
       L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)

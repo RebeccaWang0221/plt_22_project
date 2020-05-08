@@ -30,7 +30,7 @@ type stmt =
   | Else of stmt list
   | While of expr * stmt list
   | For of stmt * expr * stmt list
-  | Range of stmt * expr * stmt list
+  | Range of stmt * expr * expr * expr * stmt list
   | Do of stmt list * expr
   | Return of expr
   | Assign of expr * expr
