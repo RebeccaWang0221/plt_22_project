@@ -1,6 +1,11 @@
 
 List of TODOs that need implementing:
 
+	Current:
+		- finish lists
+		- range loop for step and start
+		- for in loop
+
 	Next Steps:
 		1) test basic code as it currently stands and fix bugs
 			- Goal completion: Tuesday, May 5 (Completed)
@@ -10,13 +15,10 @@ List of TODOs that need implementing:
 			- Goal completion: Thursday, May 14
 
 	Bugs:
-		- need to implement string/char equality and inequality
 		- if_end block does not get terminator when inside of a function so an error occurs, only problematic if there
 		  is an else
 		- fix the warnings
 
-	Questions:
-		- How to implement string/char equality and inequality?
 
 	Tests Passed:
 		- test_while.rs
@@ -31,9 +33,6 @@ List of TODOs that need implementing:
 		- fail_assign2.rs
 		- test_cal_int.rs
 
-	Tests Failed:
-		- test_cal_string.rs
-				- need to implement == and != for strings and chars
 
 	Not yer tested:
 		- test_for.rs
@@ -42,9 +41,6 @@ List of TODOs that need implementing:
 
 	Necessities:
 		- list, arrays, and structs
-			- need to implement function calls in scanner, parser, and semant
-			- need to implement functionality in c++
-			- literals to be implemented
 		- gradual typing system
 		- range loop that handles start index and step size
 
