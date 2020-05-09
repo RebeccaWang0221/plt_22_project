@@ -1,0 +1,1084 @@
+### Starting build.
+# Target: rattle.ml.depends, tags: { extension:ml, file:rattle.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules rattle.ml > rattle.ml.depends # cached
+# Target: irgen.ml.depends, tags: { extension:ml, file:irgen.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules irgen.ml > irgen.ml.depends
+# Target: ast.mli.depends, tags: { extension:mli, file:ast.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules ast.mli > ast.mli.depends # cached
+# Target: ast.cmi, tags: { byte, compile, extension:mli, file:ast.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o ast.cmi ast.mli # cached
+# Target: pretty.ml.depends, tags: { extension:ml, file:pretty.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules pretty.ml > pretty.ml.depends # cached
+# Target: pretty.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:pretty.cmo, file:pretty.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o pretty.cmo pretty.ml # cached
+# Target: sast.mli.depends, tags: { extension:mli, file:sast.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules sast.mli > sast.mli.depends # cached
+# Target: sast.cmi, tags: { byte, compile, extension:mli, file:sast.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o sast.cmi sast.mli # cached
+# Target: parser.mly, tags: { extension:mly, file:parser.mly, infer, ocaml, ocamlyacc, parser, quiet }
+ocamlyacc parser.mly # cached
+# Target: parser.mli.depends, tags: { extension:mli, file:parser.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules parser.mli > parser.mli.depends # cached
+# Target: parser.cmi, tags: { byte, compile, extension:mli, file:parser.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o parser.cmi parser.mli # cached
+# Target: scanner.mll, tags: { extension:mll, file:scanner.mll, lexer, ocaml, ocamllex, quiet }
+ocamllex.opt -q scanner.mll # cached
+# Target: scanner.ml.depends, tags: { extension:ml, file:scanner.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules scanner.ml > scanner.ml.depends # cached
+# Target: scanner.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:scanner.cmo, file:scanner.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o scanner.cmo scanner.ml # cached
+# Target: semant.ml.depends, tags: { extension:ml, file:semant.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules semant.ml > semant.ml.depends # cached
+# Target: semant.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:semant.cmo, file:semant.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o semant.cmo semant.ml # cached
+# Target: irgen.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:irgen.cmo, file:irgen.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmo irgen.ml
++ ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmo irgen.ml
+File "irgen.ml", lines 38-47, characters 21-61:
+38 | .....................function
+39 |     | Ast.Int -> i32_t
+40 |     | Ast.Bool -> i1_t
+41 |     | Ast.Float -> float_t
+42 |     | Ast.String -> string_t
+43 |     | Ast.Char -> string_t
+44 |     | Ast.Void -> i1_t
+45 |     | Ast.List(Ast.Int) -> int_list_t
+46 |     | Ast.List(Ast.Float) -> float_list_t
+47 |     | Ast.List(Ast.String) | Ast.List(Ast.Char) -> str_list_t
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(List (Bool|Stct|Void|List _|Array (_, _))|Stct|Array (_, _))
+File "irgen.ml", lines 151-156, characters 20-21:
+151 | ....................(match op with
+152 |                       | Ast.Add -> L.build_fadd
+153 |                       | Ast.Sub -> L.build_fsub
+154 |                       | Ast.Div -> L.build_fdiv
+155 |                       | Ast.Mult-> L.build_fmul
+156 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 161-166, characters 20-21:
+161 | ....................(match op with
+162 |                       | Ast.Add -> L.build_fadd
+163 |                       | Ast.Sub -> L.build_fsub
+164 |                       | Ast.Div -> L.build_fdiv
+165 |                       | Ast.Mult-> L.build_fmul
+166 |                     )...............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 145-166, characters 16-52:
+145 | ................(match t2 with
+146 |                   | Int ->
+147 |                     let int_e1 = build_expr builder e1 in
+148 |                     let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+149 |                     and int_e2 = build_expr builder e2 in
+...
+163 |                       | Ast.Sub -> L.build_fsub
+164 |                       | Ast.Div -> L.build_fdiv
+165 |                       | Ast.Mult-> L.build_fmul
+166 |                     ) e1' e2' "float_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 173-178, characters 20-21:
+173 | ....................(match op with
+174 |                       | Ast.Add -> L.build_fadd
+175 |                       | Ast.Sub -> L.build_fsub
+176 |                       | Ast.Div -> L.build_fdiv
+177 |                       | Ast.Mult-> L.build_fmul
+178 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 182-187, characters 20-21:
+182 | ....................(match op with
+183 |                       | Ast.Add -> L.build_fadd
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     )................................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 168-187, characters 16-52:
+168 | ................(match t2 with
+169 |                   | Int ->
+170 |                     let e1' = build_expr builder e1
+171 |                     and int_e2 = build_expr builder e2 in
+172 |                     let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+...
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     ) e1' e2' "float_binop" builder).
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 143-187, characters 12-53:
+143 | ............(match t1 with
+144 |               | Int ->
+145 |                 (match t2 with
+146 |                   | Int ->
+147 |                     let int_e1 = build_expr builder e1 in
+...
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     ) e1' e2' "float_binop" builder))
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 204-211, characters 20-21:
+204 | ....................(match op with
+205 |                       | Ast.Eq -> L.build_icmp L.Icmp.Eq
+206 |                       | Ast.Neq -> L.build_icmp L.Icmp.Ne
+207 |                       | Ast.Gt -> L.build_icmp L.Icmp.Sgt
+208 |                       | Ast.Lt -> L.build_icmp L.Icmp.Slt
+209 |                       | Ast.Gte -> L.build_icmp L.Icmp.Sge
+210 |                       | Ast.Lte -> L.build_icmp L.Icmp.Sle
+211 |                     ).............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 216-223, characters 20-21:
+216 | ....................(match op with
+217 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+218 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+219 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+220 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+221 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+222 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+223 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 200-223, characters 16-51:
+200 | ................(match t2 with
+201 |                   | Int ->
+202 |                     let e1' = build_expr builder e1
+203 |                     and e2' = build_expr builder e2 in
+204 |                     (match op with
+...
+220 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+221 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+222 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+223 |                     ) e1' e2' "bool_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 229-236, characters 20-21:
+229 | ....................(match op with
+230 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+231 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+232 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+233 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+234 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+235 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+236 |                     ).............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 241-248, characters 20-21:
+241 | ....................(match op with
+242 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+243 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+244 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+245 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+246 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+247 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+248 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 225-248, characters 16-51:
+225 | ................(match t2 with
+226 |                   | Float ->
+227 |                     let e1' = build_expr builder e1
+228 |                     and e2' = build_expr builder e2 in
+229 |                     (match op with
+...
+245 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+246 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+247 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+248 |                     ) e1' e2' "bool_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 266-272, characters 11-12:
+266 | ...........(match op with
+267 |           	  | Ast.Add -> L.build_add
+268 |           		| Ast.Sub -> L.build_sub
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 198-272, characters 12-41:
+198 | ............(match t1 with
+199 |               | Int ->
+200 |                 (match t2 with
+201 |                   | Int ->
+202 |                     let e1' = build_expr builder e1
+...
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  ) e1' e2' "int_binop" builder).
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", line 263, characters 11-18:
+263 |         	| Ast.Int ->
+                 ^^^^^^^
+Warning 11: this match case is unused.
+File "irgen.ml", lines 139-272, characters 7-42:
+139 | .......(match t with
+140 |       	  | Ast.Float ->
+141 |             let (t1, _) = e1
+142 |             and (t2, _) = e2 in
+143 |             (match t1 with
+...
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  ) e1' e2' "int_binop" builder))
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Int|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 295-298, characters 8-81:
+295 | ........(match t with
+296 |           | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+297 |           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
+298 |           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 292-298, characters 8-81:
+292 | ........let (List(t), SId(s)) = id in
+293 |         let pointer = lookup s in
+294 |         let idx = build_expr builder e in
+295 |         (match t with
+296 |           | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+297 |           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
+298 |           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 303-306, characters 8-84:
+303 | ........(match t with
+304 |           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+305 |           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
+306 |           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 300-306, characters 8-84:
+300 | ........let (List(t), SId(s)) = id in
+301 |         let pointer = lookup s in
+302 |         let v = build_expr builder e in
+303 |         (match t with
+304 |           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+305 |           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
+306 |           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 311-314, characters 8-78:
+311 | ........(match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 308-314, characters 8-78:
+308 | ........let (List(t), SId(s)) = id in
+309 |         let pointer = lookup s in
+310 |         let v = build_expr builder e in
+311 |         (match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 131-314, characters 4-78:
+131 | ....match e with
+132 |       | SIntLit i -> L.const_int i32_t i
+133 |       | SStrLit s -> L.build_global_stringptr s "string" builder
+134 |       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
+135 |       | SFloatLit i -> L.const_float float_t i
+...
+311 |         (match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SLstLit _|SSlice (_, _, _))
+File "irgen.ml", line 356, characters 12-63:
+356 |             L.build_call init_int_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 360, characters 12-65:
+360 |             L.build_call init_float_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 364, characters 12-63:
+364 |             L.build_call init_str_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 354-366, characters 10-20:
+354 | ..........(match t with
+355 |           | Int ->
+356 |             L.build_call init_int_list [| pointer |] "" builder;
+357 |             Hashtbl.add global_vars id pointer;
+358 |             builder
+...
+363 |           | String | Char ->
+364 |             L.build_call init_str_list [| pointer |] "" builder;
+365 |             Hashtbl.add global_vars id pointer;
+366 |             builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 427-447, characters 6-37:
+427 | ......let SBind(t, n) = var in
+428 |       let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
+429 |       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
+430 |       Hashtbl.add local_vars n iterator;
+431 |       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
+...
+444 |       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
+445 |       let cond = L.build_icmp L.Icmp.Eq curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+446 |       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
+447 |       L.builder_at_end context end_bb
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SCont|SBreak|SPass|SElse _|SStruct (_, _))
+File "irgen.ml", lines 462-463, characters 17-26:
+462 | .................match s with
+463 |         | (t, SId(n)) -> n
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(_,
+(SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+SCall (_, _)))
+File "irgen.ml", line 502, characters 21-73:
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 503, characters 23-77:
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 504, characters 31-83:
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 501-504, characters 10-92:
+501 | ..........match t with
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder.
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 478-504, characters 6-93:
+478 | ......(match e with
+479 |         | (Int, _) ->
+480 |           let e' = build_expr builder e in
+481 |           ignore(L.build_call printf_func [| int_format_str ; e' |] "printf" builder);
+482 |           builder
+...
+501 |           match t with
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SBinop (_, _, _)|SUnop (_, _)|SCall (_, _)|SAccess (_, _)|SSlice (_, _, _)|
+ SIndex (_, _)|SPop (_, _)))|
+((Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 510, characters 17-73:
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 511, characters 19-77:
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 512, characters 27-83:
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 509-512, characters 6-93:
+509 | ......(match t with
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 506-512, characters 6-93:
+506 | ......let (List(t), SId(s)) = e1 in
+507 |       let pointer = lookup s in
+508 |       let value = build_expr builder e2 in
+509 |       (match t with
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 518, characters 17-71:
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 519, characters 19-75:
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 520, characters 27-81:
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 517-520, characters 6-91:
+517 | ......(match t with
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 514-520, characters 6-91:
+514 | ......let (List(t), SId(s)) = e1 in
+515 |       let pointer = lookup s in
+516 |       let idx = build_expr builder e2 in
+517 |       (match t with
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 527, characters 17-75:
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 528, characters 19-79:
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 529, characters 27-85:
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 526-529, characters 6-95:
+526 | ......(match t with
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 522-529, characters 6-95:
+522 | ......let (List(t), SId(s)) = e1 in
+523 |       let pointer = lookup s in
+524 |       let idx = build_expr builder e2 in
+525 |       let v = build_expr builder e3 in
+526 |       (match t with
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 348-532, characters 42-21:
+348 | ..........................................function
+349 |     | SExpr(e) -> ignore(build_expr builder e); builder
+350 |     | SBind(ty, id) ->
+351 |       let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+352 |       (match ty with
+...
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+530 |   	| SCont -> builder (* TODO *)
+531 |   	| SBreak -> builder (* TODO *)
+532 |   	| SPass -> builder...........
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SElif (_, _)|SElse _)
+File "irgen.ml", line 10, characters 6-13:
+10 |   let builder = L.builder context in
+           ^^^^^^^
+Warning 26: unused variable builder.
+File "irgen.ml", line 20, characters 6-12:
+20 |   and void_t     = L.void_type   context
+           ^^^^^^
+Warning 26: unused variable void_t.
+File "irgen.ml", line 334, characters 12-14:
+334 |         let b' = L.builder_at_end context elif_entry in
+                  ^^
+Warning 26: unused variable b'.
+File "irgen.ml", line 406, characters 10-22:
+406 |       let build_br_end = L.build_br end_bb in (* builds a branch to end_bb *)
+                ^^^^^^^^^^^^
+Warning 26: unused variable build_br_end.
+# Target: rattle.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:rattle.cmo, file:rattle.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o rattle.cmo rattle.ml
+# Target: pretty.cmx, tags: { compile, extension:cmx, extension:ml, file:pretty.cmx, file:pretty.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o pretty.cmx pretty.ml # cached
+# Target: parser.ml.depends, tags: { extension:ml, file:parser.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules parser.ml > parser.ml.depends # cached
+# Target: parser.cmx, tags: { compile, extension:cmx, extension:ml, file:parser.cmx, file:parser.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o parser.cmx parser.ml # cached
+# Target: scanner.cmx, tags: { compile, extension:cmx, extension:ml, file:scanner.cmx, file:scanner.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o scanner.cmx scanner.ml # cached
+# Target: semant.cmx, tags: { compile, extension:cmx, extension:ml, file:semant.cmx, file:semant.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o semant.cmx semant.ml # cached
+# Target: irgen.cmx, tags: { compile, extension:cmx, extension:ml, file:irgen.cmx, file:irgen.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmx irgen.ml
++ ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmx irgen.ml
+File "irgen.ml", lines 38-47, characters 21-61:
+38 | .....................function
+39 |     | Ast.Int -> i32_t
+40 |     | Ast.Bool -> i1_t
+41 |     | Ast.Float -> float_t
+42 |     | Ast.String -> string_t
+43 |     | Ast.Char -> string_t
+44 |     | Ast.Void -> i1_t
+45 |     | Ast.List(Ast.Int) -> int_list_t
+46 |     | Ast.List(Ast.Float) -> float_list_t
+47 |     | Ast.List(Ast.String) | Ast.List(Ast.Char) -> str_list_t
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(List (Bool|Stct|Void|List _|Array (_, _))|Stct|Array (_, _))
+File "irgen.ml", lines 151-156, characters 20-21:
+151 | ....................(match op with
+152 |                       | Ast.Add -> L.build_fadd
+153 |                       | Ast.Sub -> L.build_fsub
+154 |                       | Ast.Div -> L.build_fdiv
+155 |                       | Ast.Mult-> L.build_fmul
+156 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 161-166, characters 20-21:
+161 | ....................(match op with
+162 |                       | Ast.Add -> L.build_fadd
+163 |                       | Ast.Sub -> L.build_fsub
+164 |                       | Ast.Div -> L.build_fdiv
+165 |                       | Ast.Mult-> L.build_fmul
+166 |                     )...............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 145-166, characters 16-52:
+145 | ................(match t2 with
+146 |                   | Int ->
+147 |                     let int_e1 = build_expr builder e1 in
+148 |                     let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
+149 |                     and int_e2 = build_expr builder e2 in
+...
+163 |                       | Ast.Sub -> L.build_fsub
+164 |                       | Ast.Div -> L.build_fdiv
+165 |                       | Ast.Mult-> L.build_fmul
+166 |                     ) e1' e2' "float_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 173-178, characters 20-21:
+173 | ....................(match op with
+174 |                       | Ast.Add -> L.build_fadd
+175 |                       | Ast.Sub -> L.build_fsub
+176 |                       | Ast.Div -> L.build_fdiv
+177 |                       | Ast.Mult-> L.build_fmul
+178 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 182-187, characters 20-21:
+182 | ....................(match op with
+183 |                       | Ast.Add -> L.build_fadd
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     )................................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Mod|Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 168-187, characters 16-52:
+168 | ................(match t2 with
+169 |                   | Int ->
+170 |                     let e1' = build_expr builder e1
+171 |                     and int_e2 = build_expr builder e2 in
+172 |                     let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+...
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     ) e1' e2' "float_binop" builder).
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 143-187, characters 12-53:
+143 | ............(match t1 with
+144 |               | Int ->
+145 |                 (match t2 with
+146 |                   | Int ->
+147 |                     let int_e1 = build_expr builder e1 in
+...
+184 |                       | Ast.Sub -> L.build_fsub
+185 |                       | Ast.Div -> L.build_fdiv
+186 |                       | Ast.Mult-> L.build_fmul
+187 |                     ) e1' e2' "float_binop" builder))
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 204-211, characters 20-21:
+204 | ....................(match op with
+205 |                       | Ast.Eq -> L.build_icmp L.Icmp.Eq
+206 |                       | Ast.Neq -> L.build_icmp L.Icmp.Ne
+207 |                       | Ast.Gt -> L.build_icmp L.Icmp.Sgt
+208 |                       | Ast.Lt -> L.build_icmp L.Icmp.Slt
+209 |                       | Ast.Gte -> L.build_icmp L.Icmp.Sge
+210 |                       | Ast.Lte -> L.build_icmp L.Icmp.Sle
+211 |                     ).............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 216-223, characters 20-21:
+216 | ....................(match op with
+217 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+218 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+219 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+220 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+221 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+222 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+223 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 200-223, characters 16-51:
+200 | ................(match t2 with
+201 |                   | Int ->
+202 |                     let e1' = build_expr builder e1
+203 |                     and e2' = build_expr builder e2 in
+204 |                     (match op with
+...
+220 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+221 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+222 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+223 |                     ) e1' e2' "bool_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 229-236, characters 20-21:
+229 | ....................(match op with
+230 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+231 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+232 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+233 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+234 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+235 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+236 |                     ).............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 241-248, characters 20-21:
+241 | ....................(match op with
+242 |                       | Ast.Eq -> L.build_fcmp L.Fcmp.Oeq
+243 |                       | Ast.Neq -> L.build_fcmp L.Fcmp.One
+244 |                       | Ast.Gt -> L.build_fcmp L.Fcmp.Ogt
+245 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+246 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+247 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+248 |                     )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Add|Sub|Mult|Div|Mod|Exp|And|Or)
+File "irgen.ml", lines 225-248, characters 16-51:
+225 | ................(match t2 with
+226 |                   | Float ->
+227 |                     let e1' = build_expr builder e1
+228 |                     and e2' = build_expr builder e2 in
+229 |                     (match op with
+...
+245 |                       | Ast.Lt -> L.build_fcmp L.Fcmp.Olt
+246 |                       | Ast.Gte -> L.build_fcmp L.Fcmp.Oge
+247 |                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
+248 |                     ) e1' e2' "bool_binop" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(String|Bool|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 266-272, characters 11-12:
+266 | ...........(match op with
+267 |           	  | Ast.Add -> L.build_add
+268 |           		| Ast.Sub -> L.build_sub
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  )..............................
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Exp|Eq|Neq|And|Or|Lt|Gt|Lte|Gte)
+File "irgen.ml", lines 198-272, characters 12-41:
+198 | ............(match t1 with
+199 |               | Int ->
+200 |                 (match t2 with
+201 |                   | Int ->
+202 |                     let e1' = build_expr builder e1
+...
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  ) e1' e2' "int_binop" builder).
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", line 263, characters 11-18:
+263 |         	| Ast.Int ->
+                 ^^^^^^^
+Warning 11: this match case is unused.
+File "irgen.ml", lines 139-272, characters 7-42:
+139 | .......(match t with
+140 |       	  | Ast.Float ->
+141 |             let (t1, _) = e1
+142 |             and (t2, _) = e2 in
+143 |             (match t1 with
+...
+269 |           		| Ast.Div -> L.build_sdiv
+270 |           		| Ast.Mult-> L.build_mul
+271 |           		| Ast.Mod -> L.build_srem
+272 |        		  ) e1' e2' "int_binop" builder))
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Int|Char|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 295-298, characters 8-81:
+295 | ........(match t with
+296 |           | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+297 |           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
+298 |           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 292-298, characters 8-81:
+292 | ........let (List(t), SId(s)) = id in
+293 |         let pointer = lookup s in
+294 |         let idx = build_expr builder e in
+295 |         (match t with
+296 |           | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+297 |           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
+298 |           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 303-306, characters 8-84:
+303 | ........(match t with
+304 |           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+305 |           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
+306 |           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 300-306, characters 8-84:
+300 | ........let (List(t), SId(s)) = id in
+301 |         let pointer = lookup s in
+302 |         let v = build_expr builder e in
+303 |         (match t with
+304 |           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+305 |           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
+306 |           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 311-314, characters 8-78:
+311 | ........(match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 308-314, characters 8-78:
+308 | ........let (List(t), SId(s)) = id in
+309 |         let pointer = lookup s in
+310 |         let v = build_expr builder e in
+311 |         (match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 131-314, characters 4-78:
+131 | ....match e with
+132 |       | SIntLit i -> L.const_int i32_t i
+133 |       | SStrLit s -> L.build_global_stringptr s "string" builder
+134 |       | SBoolLit b -> L.const_int i1_t (if b then 1 else 0)
+135 |       | SFloatLit i -> L.const_float float_t i
+...
+311 |         (match t with
+312 |           | Int -> L.build_call pop_int [| pointer; v |] "" builder
+313 |           | Float -> L.build_call pop_float [| pointer; v |] "" builder
+314 |           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SLstLit _|SSlice (_, _, _))
+File "irgen.ml", line 356, characters 12-63:
+356 |             L.build_call init_int_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 360, characters 12-65:
+360 |             L.build_call init_float_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 364, characters 12-63:
+364 |             L.build_call init_str_list [| pointer |] "" builder;
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 354-366, characters 10-20:
+354 | ..........(match t with
+355 |           | Int ->
+356 |             L.build_call init_int_list [| pointer |] "" builder;
+357 |             Hashtbl.add global_vars id pointer;
+358 |             builder
+...
+363 |           | String | Char ->
+364 |             L.build_call init_str_list [| pointer |] "" builder;
+365 |             Hashtbl.add global_vars id pointer;
+366 |             builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 427-447, characters 6-37:
+427 | ......let SBind(t, n) = var in
+428 |       let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
+429 |       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
+430 |       Hashtbl.add local_vars n iterator;
+431 |       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
+...
+444 |       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
+445 |       let cond = L.build_icmp L.Icmp.Eq curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+446 |       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
+447 |       L.builder_at_end context end_bb
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SCont|SBreak|SPass|SElse _|SStruct (_, _))
+File "irgen.ml", lines 462-463, characters 17-26:
+462 | .................match s with
+463 |         | (t, SId(n)) -> n
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(_,
+(SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+SCall (_, _)))
+File "irgen.ml", line 502, characters 21-73:
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 503, characters 23-77:
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 504, characters 31-83:
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 501-504, characters 10-92:
+501 | ..........match t with
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder.
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 478-504, characters 6-93:
+478 | ......(match e with
+479 |         | (Int, _) ->
+480 |           let e' = build_expr builder e in
+481 |           ignore(L.build_call printf_func [| int_format_str ; e' |] "printf" builder);
+482 |           builder
+...
+501 |           match t with
+502 |             | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+503 |             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
+504 |             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SBinop (_, _, _)|SUnop (_, _)|SCall (_, _)|SAccess (_, _)|SSlice (_, _, _)|
+ SIndex (_, _)|SPop (_, _)))|
+((Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 510, characters 17-73:
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 511, characters 19-77:
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 512, characters 27-83:
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 509-512, characters 6-93:
+509 | ......(match t with
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 506-512, characters 6-93:
+506 | ......let (List(t), SId(s)) = e1 in
+507 |       let pointer = lookup s in
+508 |       let value = build_expr builder e2 in
+509 |       (match t with
+510 |         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+511 |         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
+512 |         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 518, characters 17-71:
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 519, characters 19-75:
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 520, characters 27-81:
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 517-520, characters 6-91:
+517 | ......(match t with
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 514-520, characters 6-91:
+514 | ......let (List(t), SId(s)) = e1 in
+515 |       let pointer = lookup s in
+516 |       let idx = build_expr builder e2 in
+517 |       (match t with
+518 |         | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+519 |         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
+520 |         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", line 527, characters 17-75:
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 528, characters 19-79:
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", line 529, characters 27-85:
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 10: this expression should have type unit.
+File "irgen.ml", lines 526-529, characters 6-95:
+526 | ......(match t with
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(Bool|Stct|Void|List _|Array (_, _))
+File "irgen.ml", lines 522-529, characters 6-95:
+522 | ......let (List(t), SId(s)) = e1 in
+523 |       let pointer = lookup s in
+524 |       let idx = build_expr builder e2 in
+525 |       let v = build_expr builder e3 in
+526 |       (match t with
+527 |         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+528 |         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+((List _,
+ (SIntLit _|SStrLit _|SBoolLit _|SFloatLit _|SCharLit _|SLstLit _|
+ SCall (_, _)))|
+((Int|String|Bool|Float|Char|Stct|Void|Array (_, _)), _))
+File "irgen.ml", lines 348-532, characters 42-21:
+348 | ..........................................function
+349 |     | SExpr(e) -> ignore(build_expr builder e); builder
+350 |     | SBind(ty, id) ->
+351 |       let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+352 |       (match ty with
+...
+529 |         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
+530 |   	| SCont -> builder (* TODO *)
+531 |   	| SBreak -> builder (* TODO *)
+532 |   	| SPass -> builder...........
+Warning 8: this pattern-matching is not exhaustive.
+Here is an example of a case that is not matched:
+(SElif (_, _)|SElse _)
+File "irgen.ml", line 10, characters 6-13:
+10 |   let builder = L.builder context in
+           ^^^^^^^
+Warning 26: unused variable builder.
+File "irgen.ml", line 20, characters 6-12:
+20 |   and void_t     = L.void_type   context
+           ^^^^^^
+Warning 26: unused variable void_t.
+File "irgen.ml", line 334, characters 12-14:
+334 |         let b' = L.builder_at_end context elif_entry in
+                  ^^
+Warning 26: unused variable b'.
+File "irgen.ml", line 406, characters 10-22:
+406 |       let build_br_end = L.build_br end_bb in (* builds a branch to end_bb *)
+                ^^^^^^^^^^^^
+Warning 26: unused variable build_br_end.
+# Target: rattle.cmx, tags: { compile, extension:cmx, extension:ml, file:rattle.cmx, file:rattle.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o rattle.cmx rattle.ml
+# Target: rattle.native, tags: { dont_link_with, extension:native, file:rattle.native, link, native, ocaml, program, quiet }
+ocamlopt.opt -I /Users/rebecca/.opam/4.09.0/lib/llvm /Users/rebecca/.opam/4.09.0/lib/llvm/static/llvm.cmxa pretty.cmx irgen.cmx parser.cmx scanner.cmx semant.cmx rattle.cmx -o rattle.native
+# Compilation successful.

@@ -1,0 +1,82 @@
+; ModuleID = 'RattleSnake'
+source_filename = "RattleSnake"
+
+%IntList = type { %IntNode*, i32 }
+%IntNode = type { i32, %IntNode* }
+%FloatList = type { %FloatNode*, double }
+%FloatNode = type { double, %FloatNode* }
+%StrList = type { %StrNode*, i32 }
+%StrNode = type { i8*, %StrNode* }
+
+@int_fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@str_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
+@str_fmt.1 = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
+@bool_fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+
+declare i32 @printf(i8*, ...)
+
+declare i32 @str_comp(i8*, i8*)
+
+declare i32 @str_diff(i8*, i8*)
+
+declare i8* @str_concat(i8*, i8*)
+
+declare void @init_int_list(%IntList*)
+
+declare void @print_int_list(%IntList*)
+
+declare void @append_int(%IntList*, i32)
+
+declare void @remove_int(%IntList*, i32)
+
+declare i32 @get_int(%IntList*, i32)
+
+declare void @insert_int(%IntList*, i32, i32)
+
+declare i32 @pop_int(%IntList*, i32)
+
+declare i32 @index_int(%IntList*, i32)
+
+declare void @init_float_list(%FloatList*)
+
+declare void @print_float_list(%FloatList*)
+
+declare void @append_float(%FloatList*, double)
+
+declare void @remove_float(%FloatList*, i32)
+
+declare double @get_float(%FloatList*, i32)
+
+declare void @insert_float(%FloatList*, i32, double)
+
+declare double @pop_float(%FloatList*, i32)
+
+declare i32 @index_float(%FloatList*, double)
+
+declare void @init_str_list(%StrList*)
+
+declare void @print_str_list(%StrList*)
+
+declare void @append_str(%StrList*, i8*)
+
+declare void @remove_str(%StrList*, i32)
+
+declare i8* @get_str(%StrList*, i32)
+
+declare void @insert_str(%StrList*, i32, i8*)
+
+declare i8* @pop_str(%StrList*, i32)
+
+declare i32 @index_str(%StrList*, i8*)
+
+define i32 @main() {
+entry:
+  %a = alloca double
+  store double 3.200000e+00, double* %a
+  %a1 = load double, double* %a
+  %float_binop = fmul double %a1, 3.000000e+00
+  %print_float = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @str_fmt.1, i32 0, i32 0), double %float_binop)
+  ret i32 0
+}
+
