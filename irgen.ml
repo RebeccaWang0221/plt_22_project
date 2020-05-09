@@ -68,6 +68,11 @@ let translate stmts =
   let str_size_t : L.lltype = L.function_type i32_t [| string_t |] in
   let str_size : L.llvalue = L.declare_function "str_size" str_size_t the_module in
 
+  let pow_int_t : L.lltype = L.function_type i32_t [| i32_t ; i32_t |] in
+  let pow_int : L.llvalue = L.declare_function "pow_int" pow_int_t the_module in
+  let pow_float_t : L.lltype = L.function_type float_t [| float_t ; float_t |] in
+  let pow_float : L.llvalue = L.declare_function "pow_float" pow_float_t the_module in
+
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
   let print_int_list : L.llvalue = L.declare_function "print_int_list" init_int_list_t the_module in
@@ -166,6 +171,7 @@ let translate stmts =
                     let int_e1 = build_expr builder e1 in
                     let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
                     and e2' = build_expr builder e2 in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -178,6 +184,7 @@ let translate stmts =
                     let e1' = build_expr builder e1
                     and int_e2 = build_expr builder e2 in
                     let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -187,6 +194,7 @@ let translate stmts =
                   | Float ->
                     let e1' = build_expr builder e1
                     and e2' = build_expr builder e2 in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -271,6 +279,7 @@ let translate stmts =
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
+            if op = Exp then L.build_call pow_int [| e1' ; e2' |] "" builder else
         	  (match op with
           	  | Ast.Add -> L.build_add
           		| Ast.Sub -> L.build_sub
