@@ -471,8 +471,58 @@ let translate stmts =
       ignore(L.build_br entry_bb (L.builder_at_end context while_body)); (* branch to entry_bb at end of while_bb *)
       ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end context entry_bb)); (* conditional branch to while_body or end_body at the end of entry_bb *)
       L.builder_at_end context end_bb
-  	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
-      builder
+  	| SFor(var, e, body) ->
+      let SBind(t, n) = var in
+      let (_, SId(s)) = e in (* only works for ids *)
+      let start_iter_val = L.const_int i32_t 0 in (* index of list/string starts at 0 *)
+      let iterator = L.build_alloca i32_t "iter" builder in (* allocate for the iterator *)
+      let iter_value_p = (match t with (* allocate for the list/string iterator value *)
+        | Int -> L.build_alloca i32_t "iter_val" builder
+        | Float -> L.build_alloca float_t "iter_val" builder
+        | String | Char -> L.build_alloca string_t "iter_val" builder
+        | Bool -> L.build_alloca i1_t "iter_val" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      Hashtbl.add local_vars "for_iter" iterator; (* add iterator  *)
+      Hashtbl.add local_vars n iter_value_p; (* add iterator value *)
+      ignore(L.build_store start_iter_val iterator builder); (* store iterator *)
+      let lst_pointer = lookup s in
+      let iter_value = (match t with (* get value for first list element *)
+        | Int | Bool -> L.build_call get_int [| lst_pointer ; start_iter_val |] "" builder
+        | Float -> L.build_call get_float [| lst_pointer ; start_iter_val |] "" builder
+        | String | Char -> L.build_call get_str [| lst_pointer ; start_iter_val |] "" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_store iter_value iter_value_p builder);
+      let entry_bb = L.append_block context "for_entry" the_function in
+      let end_val = (match t with
+        | Int | Bool -> L.build_call int_list_size [| lst_pointer |] "end_val" builder
+        | Float -> L.build_call float_list_size [| lst_pointer |] "end_val" builder
+        | String | Char -> L.build_call str_list_size [| lst_pointer |] "end_val" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_br entry_bb builder);
+      let body_bb = L.append_block context "for_body" the_function in
+      ignore(build_body (L.builder_at_end context body_bb) the_function body);
+      let body_builder = L.builder_at_end context body_bb in
+      let idx_val = L.build_load iterator "load_iter" body_builder in
+      let next_val = L.build_add idx_val (L.const_int i32_t 1) "next_val" body_builder in
+      ignore(L.build_store next_val iterator body_builder);
+      let iter_value = (match t with (* get value for first list element *)
+        | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" body_builder
+        | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" body_builder
+        | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" body_builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_store iter_value iter_value_p body_builder);
+      ignore(L.build_br entry_bb body_builder);
+      let end_bb = L.append_block context "for_end" the_function in
+      let entry_builder = L.builder_at_end context entry_bb in
+      let curr_val = L.build_load iterator "load_iter" entry_builder in
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in
+      ignore(L.build_cond_br cond end_bb body_bb entry_builder);
+      Hashtbl.clear local_vars;
+      L.builder_at_end context end_bb
   	| SRange(var, beg, ed, st, body) -> (* TEST *)
       let SBind(t, n) = var in
       let start_val = build_expr builder beg in (* create start val at 0 *)

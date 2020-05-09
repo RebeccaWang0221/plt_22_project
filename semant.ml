@@ -245,35 +245,11 @@ let check stmts vars funcs =
 	      | _ -> raise (Failure ("invalid variable declaration in for loop"))
 	    and body = check_stmt_list m func_map st2_lst
 	    and (_, _, (t2, e2)) = check_expr m func_map ex in
-	    let ret = match t1 with
-	      | Int ->
-	        (match t2 with
-	          | List(ty) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Float ->
-	        (match t2 with
-	          | List(ty) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Char ->
-	        (match t2 with
-	          | List(ty) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
-	          | String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Bool ->
-	        (match t2 with
-	          | List(ty) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | String ->
-	        (match t2 with
-	          | List(ty) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match"))
-	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1)))
-	    in ret
+	    (match t2 with
+			  | List(ty) when ty = t1 -> (m, func_map, SFor(s, (t2, e2), body))
+				| Array(ty, e) when ty = t1 -> (m, func_map, SFor(s, (t2, e2), body))
+				| String when t1 = Char -> (m, func_map, SFor(s, (t2, e2), body))
+				| _ -> raise (Failure ("types of iterator variable and object elements do not match")))
 
 	  | Range(st1, e1, e2, e3, st2_lst) ->
 	  	let (m1, _, s1) = check_stmt var_map func_map st1 in
