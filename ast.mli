@@ -17,6 +17,7 @@ type expr =
   | Access of expr * expr
   | Index of expr * expr
   | Pop of expr * expr
+  | Len of expr
 
 type typ = Int | String | Bool | Float | Char | List of typ | Stct | Void | Array of typ * expr
 

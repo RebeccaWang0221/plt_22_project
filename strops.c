@@ -27,3 +27,11 @@ char *str_concat(char *s1, char *s2) {
     strcat(new_str, s2);
     return new_str;
 }
+
+int str_size(char *s) {
+    int len = 0;
+    for (int i = 0; s[i] != '\0'; i++) {
+        len++;
+    }
+    return len;
+}

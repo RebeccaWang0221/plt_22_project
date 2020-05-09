@@ -126,6 +126,10 @@ int pop_int(struct IntList *lst, int idx) {
     }
 }
 
+int int_list_size(struct IntList *lst) {
+    return lst->size;
+}
+
 void print_int_list(struct IntList *lst) {
     struct IntNode *curr = lst->head;
     while (curr != NULL) {

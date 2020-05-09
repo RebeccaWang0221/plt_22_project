@@ -127,6 +127,10 @@ char *pop_str(struct StrList *lst, int idx) {
     }
 }
 
+int str_list_size(struct StrList *lst) {
+    return lst->size;
+}
+
 void print_str_list(struct StrList *lst) {
     struct StrNode *curr = lst->head;
     while (curr != NULL) {

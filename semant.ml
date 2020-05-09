@@ -118,6 +118,13 @@ let check stmts vars funcs =
 					| _ -> raise (Failure ("pop must be called on list type"))
 			else raise (Failure ("index must be of type int"))
 
+		| Len(e) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map e in
+			match t1 with
+			  | String -> (var_map, func_map, (Int, SLen((t1, e1))))
+				| List(ty) -> (var_map, func_map, (Int, SLen((t1, e1))))
+				| _ -> raise (Failure ("len expression cannot be called with type " ^ string_of_typ t1))
+
 	  | _ -> raise (Failure ("invalid expression"))
 
 	in

@@ -65,6 +65,8 @@ let translate stmts =
   let str_diff : L.llvalue = L.declare_function "str_diff" str_cmp_t the_module in
   let str_concat_t : L.lltype = L.function_type string_t [| string_t ; string_t |] in
   let str_concat : L.llvalue = L.declare_function "str_concat" str_concat_t the_module in
+  let str_size_t : L.lltype = L.function_type i32_t [| string_t |] in
+  let str_size : L.llvalue = L.declare_function "str_size" str_size_t the_module in
 
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
@@ -78,6 +80,8 @@ let translate stmts =
   let insert_int : L.llvalue = L.declare_function "insert_int" insert_int_t the_module in
   let pop_int : L.llvalue = L.declare_function "pop_int" get_int_t the_module in
   let index_of_int : L.llvalue = L.declare_function "index_int" get_int_t the_module in
+  let int_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t |] in
+  let int_list_size : L.llvalue = L.declare_function "int_list_size" int_list_size_t the_module in
 
   let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
   let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
@@ -93,6 +97,8 @@ let translate stmts =
   let pop_float : L.llvalue = L.declare_function "pop_float" get_float_t the_module in
   let index_of_float_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t ; float_t |] in
   let index_of_float : L.llvalue = L.declare_function "index_float" index_of_float_t the_module in
+  let float_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t |] in
+  let float_list_size : L.llvalue = L.declare_function "float_list_size" float_list_size_t the_module in
 
   let init_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t |] in
   let init_str_list : L.llvalue = L.declare_function "init_str_list" init_str_list_t the_module in
@@ -108,6 +114,8 @@ let translate stmts =
   let pop_str : L.llvalue = L.declare_function "pop_str" get_str_t the_module in
   let index_of_str_t : L.lltype = L.function_type i32_t [| L.pointer_type str_list_t ; string_t |] in
   let index_of_str : L.llvalue = L.declare_function "index_str" index_of_str_t the_module in
+  let str_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type str_list_t |] in
+  let str_list_size : L.llvalue = L.declare_function "str_list_size" str_list_size_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -313,6 +321,20 @@ let translate stmts =
           | Int | Bool -> L.build_call pop_int [| pointer; v |] "" builder
           | Float -> L.build_call pop_float [| pointer; v |] "" builder
           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+
+      | SLen(e) ->
+        let (t1, e1) = e in
+        (match t1 with
+          | String ->
+            let v = build_expr builder e in
+            L.build_call str_size [| v |] "" builder
+          | List(ty) ->
+            let SId(s) = e1 in
+            let pointer = lookup s in
+            match ty with
+              | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
+              | Float -> L.build_call float_list_size [| pointer |] "" builder
+              | String | Char -> L.build_call str_list_size [| pointer |] "" builder)
 
   in
 
@@ -531,9 +553,9 @@ let translate stmts =
         | Bool -> L.build_call insert_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder; builder
         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
-  	| SCont -> builder (* TODO *)
-  	| SBreak -> builder (* TODO *)
-  	| SPass -> builder (* TODO *)
+  	| SCont -> raise (Failure ("not yet implemented"))
+  	| SBreak -> raise (Failure ("not yet implemented"))
+  	| SPass -> raise (Failure ("not yet implemented"))
 
   in
 

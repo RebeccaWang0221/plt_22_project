@@ -16,6 +16,7 @@ and sx =
   | SSlice of string * sexpr * sexpr
   | SIndex of sexpr * sexpr
   | SPop of sexpr * sexpr
+  | SLen of sexpr
 
 type sstmt =
   | SExpr of sexpr

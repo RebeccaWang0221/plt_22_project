@@ -5,7 +5,7 @@
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token ARRAY LIST STCT DEF RANGE
-%token APPEND REMOVE INSERT POP INDEX
+%token APPEND REMOVE INSERT POP INDEX LEN
 %token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -97,6 +97,7 @@ expr:
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
+  | LEN LPAREN expr RPAREN  { Len($3) }
   | expr LBRACK expr RBRACK  { Access($1, $3) }
   | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
   | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }

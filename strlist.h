@@ -26,4 +26,6 @@ int index_str(struct StrList *lst, char *val);
 
 char *pop_str(struct StrList *lst, int idx);
 
+int str_list_size(struct StrList *lst);
+
 void free_str_list(struct StrList *lst);
