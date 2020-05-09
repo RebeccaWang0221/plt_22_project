@@ -101,6 +101,7 @@ expr:
   | expr LBRACK expr RBRACK  { Access($1, $3) }
   | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
   | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }
+  | LBRACK args RBRACK  { ListLit($2) }
 
 typ:
     INT  { Int }
@@ -141,6 +142,7 @@ array_decl:
 
 list_decl:
     LIST LT typ GT ID  { Bind(List($3), $5) }
+  | LIST LT typ GT ID ASSIGN expr  { DecAssign(Bind(List($3), $5), $7) }
 
 list_funcs:
     expr DOT APPEND LPAREN expr RPAREN SEMI  { Append($1, $5) }

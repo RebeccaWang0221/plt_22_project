@@ -36,6 +36,18 @@ let check stmts vars funcs =
 
 	  | Id var -> (var_map, func_map, (type_of_var var_map var, SId var))
 
+		| ListLit(e_lst) ->
+		  let (_, _, (t, _)) = check_expr var_map func_map (List.hd e_lst) in
+			let rec build_list_lit ty = function
+			  | [] -> []
+				| _ as st :: tail ->
+				  let (_, _, (t1, e1)) = check_expr var_map func_map st in
+					if t1 <> ty then raise (Failure ("types of list elements must match"))
+					else (t1, e1) :: build_list_lit ty tail
+			in
+			let se_lst = build_list_lit t e_lst in
+			(var_map, func_map, (t, SListLit(se_lst)))
+
 	  | Binop(ex1, op, ex2) -> (* check ex1 and ex2 recursively *)
 	  	let (_, _, (t1, e1)) = check_expr var_map func_map ex1
 	  	and (_, _, (t2, e2)) = check_expr var_map func_map ex2 in
@@ -286,11 +298,19 @@ let check stmts vars funcs =
 	  	let (m2, _, (t2, e2)) = check_expr m1 func_map ex2 in
 	  	let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
 	  	in
-	  	if t1 = t2 then
-	  	  match e1 with
-	  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-	  	    | _ -> raise (Failure ("cannot assign to anything other than a variable"))
-	  	else raise (Failure err)
+			(match t1 with
+			  | List(ty) ->
+				  if ty = t2 then
+					  match e1 with
+						  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+							| _ -> raise (Failure ("can only assign to a variable"))
+					else raise (Failure err)
+				| _ ->
+			  	if t1 = t2 then
+			  	  match e1 with
+			  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+			  	    | _ -> raise (Failure ("can only assign to a variable"))
+			  	else raise (Failure err))
 
 	  | DecAssign(st, ex) ->
 	    let (m1, _, s) = check_stmt var_map func_map st in
@@ -298,8 +318,13 @@ let check stmts vars funcs =
 	    and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
 	    let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
 			in
-			if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-			else raise (Failure err)
+			(match t1 with
+			  | List(ty) ->
+				  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+					else raise (Failure err)
+				| _ ->
+					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+					else raise (Failure err))
 
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in

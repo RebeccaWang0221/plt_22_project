@@ -338,6 +338,24 @@ let translate stmts =
 
   in
 
+  let rec build_list_lit p = function
+    | [] -> []
+    | _ as ex :: tail ->
+      let (t, _) = ex in
+      let v1 = build_expr builder ex in
+      (match t with
+        | Int | Bool ->
+          L.build_call append_int [| p ; v1 |] "" builder;
+          build_list_lit p tail
+        | Float ->
+          L.build_call append_float [| p ; v1 |] "" builder;
+          build_list_lit p tail
+        | String | Char ->
+          L.build_call append_str [| p ; v1 |] "" builder;
+          build_list_lit p tail)
+
+  in
+
   let rec build_body b f = function
     | [] -> b
     | _ as st :: tail ->
@@ -482,20 +500,34 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
-      let e' = build_expr builder e in
-      let name = match s with
-        | (t, SId(n)) -> n
+      let (ty, name) = match s with
+        | (t, SId(n)) -> (t, n)
       in
-      ignore(L.build_store e' (lookup name) builder); builder (* build store function to load value into register *)
+      (match ty with
+        | List(t) ->
+          let pointer = lookup name in
+          let (_, SListLit(lst)) = e in
+          ignore(build_list_lit pointer lst); builder
+        | _ ->
+          let e' = build_expr builder e in
+          ignore(L.build_store e' (lookup name) builder); builder) (* build store function to load value into register *)
   	| SDecAssign(s, e) ->
       let (ty, id) = match s with
         | SBind(t, e) -> (t, e)
         | _ -> raise (Failure ("invalid declaration"))
       in
-      let e' = build_expr builder e in
-      let pointer = L.build_alloca (ltype_of_typ ty) id builder in
-      Hashtbl.add global_vars id pointer;
-      ignore(L.build_store e' pointer builder); builder (* build store function to load value into register *)
+      (match ty with
+        | List(t1) ->
+          let _ = build_stmt builder the_function s in
+          let pointer = lookup id in
+          let (_, SListLit(lst)) = e in
+          ignore(build_list_lit pointer lst);
+          builder
+        | _ ->
+          let e' = build_expr builder e in
+          let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+          Hashtbl.add global_vars id pointer;
+          ignore(L.build_store e' pointer builder); builder) (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
