@@ -267,7 +267,7 @@ let translate stmts =
                 (match op with
                   | Ast.Eq -> L.build_call str_cmp [| e1' ; e2' |] "" builder
                   | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
-                  | _ -> raise (Failure ("invalid comparison operation on strings")))
+                  | _ -> raise (Failure ("invalid comparison operation on strings"))))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -277,7 +277,7 @@ let translate stmts =
           		| Ast.Div -> L.build_sdiv
           		| Ast.Mult-> L.build_mul
           		| Ast.Mod -> L.build_srem
-       		  ) e1' e2' "int_binop" builder))
+       		  ) e1' e2' "int_binop" builder)
       | SUnop(id, unop) ->
         let var = lookup id in
         let var_val = L.build_load var "load" builder in
@@ -585,9 +585,9 @@ let translate stmts =
         | Bool -> L.build_call insert_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder; builder
         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
-  	| SCont -> raise (Failure ("not yet implemented"))
-  	| SBreak -> raise (Failure ("not yet implemented"))
-  	| SPass -> raise (Failure ("not yet implemented"))
+  	| SCont -> raise (Failure ("continue not yet implemented"))
+  	| SBreak -> raise (Failure ("break not yet implemented"))
+  	| SPass -> raise (Failure ("pass not yet implemented"))
 
   in
 
