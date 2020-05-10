@@ -79,6 +79,7 @@ let check stmts vars funcs =
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
 						| In -> match t2 with
 							  | List(ty) when ty = t1 -> Bool
+								| String when t1 = Char -> Bool
 								| _ -> raise (Failure ("types do not match"))
 	  	    | _ -> raise (Failure err)
 	  	  in
@@ -267,6 +268,18 @@ let check stmts vars funcs =
 	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
 	  	else raise (Failure("for-range loop must be used with int types"))
 
+		| IRange(var, e, st_lst) ->
+			let (m1, _, s1) = check_stmt var_map func_map var in
+			let SBind(t1, e1) = s1
+			and (_, _, (t2, e2)) = check_expr m1 func_map e in
+			let sst_lst = check_stmt_list m1 func_map st_lst in
+			if t1 = Int then
+				match t2 with
+				  | List(ty) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
+					| Array(ty, e) -> raise (Failure ("not yet implemented"))
+					| _ -> raise (Failure ("irange loop cannot be used with expression of type " ^ string_of_typ t2))
+			else raise (Failure("for-irange loop must be used with variable of type int"))
+
 	  | Do(st_lst, ex) -> (var_map, func_map, SDo(check_stmt_list var_map func_map st_lst, check_bool_expr var_map func_map ex))
 
 	  | Return ex -> (* if return is not inside of a function definition then raise error *)
@@ -279,15 +292,19 @@ let check stmts vars funcs =
 	  	in
 			(match t1 with
 			  | List(ty) ->
-				  if ty = t2 then
-					  match e1 with
-						  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-							| _ -> raise (Failure ("can only assign to a variable"))
-					else raise (Failure err)
+				  (match e2 with
+					  | SListLit(s_lst) ->
+						  if ty = t2 then
+							  match e1 with
+								  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+									| _ -> raise (Failure ("can only assign to a variable"))
+							else raise (Failure err)
+						| _ -> raise (Failure (err)))
 				| _ ->
 			  	if t1 = t2 then
 			  	  match e1 with
 			  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+							| SAccess(id, num) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
 			  	    | _ -> raise (Failure ("can only assign to a variable"))
 			  	else raise (Failure err))
 
@@ -299,8 +316,11 @@ let check stmts vars funcs =
 			in
 			(match t1 with
 			  | List(ty) ->
-				  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-					else raise (Failure err)
+				  (match e2 with
+					  | SListLit(s_lst) ->
+						  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+							else raise (Failure err)
+						| _ -> raise (Failure err))
 				| _ ->
 					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 					else raise (Failure err))

@@ -126,6 +126,20 @@ int pop_int(struct IntList *lst, int idx) {
     }
 }
 
+void assign_int(struct IntList *lst, int idx, int val) {
+    if (idx == 0) {
+        lst->head->val = val;
+    } else {
+        struct IntNode *node = lst->head;
+        int i = 0;
+        while (i < idx && i < lst->size - 1) {
+            node = node-> next;
+            i++;
+        }
+        node->val = val;
+    }
+}
+
 int int_list_size(struct IntList *lst) {
     return lst->size;
 }

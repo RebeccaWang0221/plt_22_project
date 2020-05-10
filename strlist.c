@@ -127,6 +127,20 @@ char *pop_str(struct StrList *lst, int idx) {
     }
 }
 
+void assign_str(struct StrList *lst, int idx, char *val) {
+    if (idx == 0) {
+        lst->head->val = val;
+    } else {
+        struct StrNode *node = lst->head;
+        int i = 0;
+        while (i < idx && i < lst->size - 1) {
+            node = node-> next;
+            i++;
+        }
+        node->val = val;
+    }
+}
+
 int str_list_size(struct StrList *lst) {
     return lst->size;
 }

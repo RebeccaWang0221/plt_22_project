@@ -126,6 +126,20 @@ double pop_float(struct FloatList *lst, int idx) {
     }
 }
 
+void assign_float(struct FloatList *lst, int idx, double val) {
+    if (idx == 0) {
+        lst->head->val = val;
+    } else {
+        struct FloatNode *node = lst->head;
+        int i = 0;
+        while (i < idx && i < lst->size - 1) {
+            node = node-> next;
+            i++;
+        }
+        node->val = val;
+    }
+}
+
 int float_list_size(struct FloatList *lst) {
     return lst->size;
 }

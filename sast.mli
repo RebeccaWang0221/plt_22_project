@@ -28,6 +28,7 @@ type sstmt =
   | SWhile of sexpr * sstmt list
   | SFor of sstmt * sexpr * sstmt list
   | SRange of sstmt * sexpr * sexpr * sexpr * sstmt list
+  | SIRange of sstmt * sexpr * sstmt list
   | SDo of sstmt list * sexpr
   | SReturn of sexpr
   | SAssign of sexpr * sexpr
