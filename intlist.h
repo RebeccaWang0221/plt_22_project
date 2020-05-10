@@ -31,3 +31,5 @@ void free_int_list(struct IntList *lst);
 char contains_int(struct IntList *lst, int val);
 
 int int_list_size(struct IntList *lst);
+
+void assign_int(struct IntList *lst, int idx, int val);

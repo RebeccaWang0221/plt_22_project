@@ -79,6 +79,7 @@ let translate stmts =
   let int_list_size : L.llvalue = L.declare_function "int_list_size" int_list_size_t the_module in
   let contains_int_t : L.lltype = L.function_type i1_t [| L.pointer_type int_list_t ; i32_t |] in
   let contains_int : L.llvalue = L.declare_function "contains_int" contains_int_t the_module in
+  let assign_int : L.llvalue = L.declare_function "assign_int" insert_int_t the_module in
 
   let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
   let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
@@ -98,6 +99,7 @@ let translate stmts =
   let float_list_size : L.llvalue = L.declare_function "float_list_size" float_list_size_t the_module in
   let contains_float_t : L.lltype = L.function_type i1_t [| L.pointer_type float_list_t ; float_t |] in
   let contains_float : L.llvalue = L.declare_function "contains_float" contains_float_t the_module in
+  let assign_float : L.llvalue = L.declare_function "assign_float" insert_float_t the_module in
 
   let init_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t |] in
   let init_str_list : L.llvalue = L.declare_function "init_str_list" init_str_list_t the_module in
@@ -117,6 +119,7 @@ let translate stmts =
   let str_list_size : L.llvalue = L.declare_function "str_list_size" str_list_size_t the_module in
   let contains_str_t : L.lltype = L.function_type i1_t [| L.pointer_type str_list_t ; string_t |] in
   let contains_str : L.llvalue = L.declare_function "contains_str" contains_str_t the_module in
+  let assign_str : L.llvalue = L.declare_function "assign_str" insert_str_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -373,8 +376,11 @@ let translate stmts =
       let (t, _) = ex in
       let v1 = build_expr b ex in
       (match t with
-        | Int | Bool ->
+        | Int ->
           L.build_call append_int [| p ; v1 |] "" b;
+          build_list_lit p b tail
+        | Bool ->
+          L.build_call append_int [| p ; (L.const_intcast v1 i32_t false) |] "" b;
           build_list_lit p b tail
         | Float ->
           L.build_call append_float [| p ; v1 |] "" b;
@@ -586,17 +592,26 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
-      let (ty, name) = match s with
-        | (t, SId(n)) -> (t, n)
-      in
-      (match ty with
-        | List(t) ->
-          let pointer = lookup name in
-          let (_, SListLit(lst)) = e in
-          ignore(build_list_lit pointer builder lst); builder
-        | _ ->
-          let e' = build_expr builder e in
-          ignore(L.build_store e' (lookup name) builder); builder) (* build store function to load value into register *)
+      (match s with
+        | (ty, SId(name)) ->
+          (match ty with
+            | List(t) ->
+              let pointer = lookup name in
+              let (_, SListLit(lst)) = e in
+              ignore(build_list_lit pointer builder lst); builder
+            | _ ->
+              let e' = build_expr builder e in
+              ignore(L.build_store e' (lookup name) builder); builder)
+        | (ty, SAccess(e1, e2)) ->
+          let (_, SId(s)) = e1 in
+          let pointer = lookup s in
+          let idx = build_expr builder e2 in
+          let v = build_expr builder e in
+          (match ty with
+            | Int -> ignore(L.build_call assign_int [| pointer ; idx ; v |] "" builder); builder
+            | Bool -> ignore(L.build_call assign_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder); builder
+            | String | Char -> ignore(L.build_call assign_str [| pointer ; idx ; v |] "" builder); builder
+            | Float -> ignore(L.build_call assign_float [| pointer ; idx ; v |] "" builder); builder))
   	| SDecAssign(s, e) ->
       let (ty, id) = match s with
         | SBind(t, e) -> (t, e)
