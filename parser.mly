@@ -4,7 +4,7 @@
 %token DIVIDE TIMES MOD
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
-%token ARRAY LIST STCT DEF RANGE
+%token ARRAY LIST STCT DEF RANGE IRANGE
 %token APPEND REMOVE INSERT POP INDEX LEN
 %token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
@@ -51,6 +51,7 @@ stmt:
   | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, IntLit(0), $6, IntLit(1), $9) }
   | FOR vdecl IN RANGE LPAREN expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, IntLit(1), $11) }
   | FOR vdecl IN RANGE LPAREN expr COMMA expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, $10, $13) }
+  | FOR vdecl IN IRANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { IRange($2, $6, $9) }
   | FOR vdecl IN expr LBRACE stmt_list RBRACE  { For($2, $4, $6) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
   | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }

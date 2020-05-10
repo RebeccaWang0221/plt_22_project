@@ -268,6 +268,18 @@ let check stmts vars funcs =
 	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
 	  	else raise (Failure("for-range loop must be used with int types"))
 
+		| IRange(var, e, st_lst) ->
+			let (m1, _, s1) = check_stmt var_map func_map var in
+			let SBind(t1, e1) = s1
+			and (_, _, (t2, e2)) = check_expr m1 func_map e in
+			let sst_lst = check_stmt_list m1 func_map st_lst in
+			if t1 = Int then
+				match t2 with
+				  | List(ty) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
+					| Array(ty, e) -> raise (Failure ("not yet implemented"))
+					| _ -> raise (Failure ("irange loop cannot be used with expression of type " ^ string_of_typ t2))
+			else raise (Failure("for-irange loop must be used with variable of type int"))
+
 	  | Do(st_lst, ex) -> (var_map, func_map, SDo(check_stmt_list var_map func_map st_lst, check_bool_expr var_map func_map ex))
 
 	  | Return ex -> (* if return is not inside of a function definition then raise error *)

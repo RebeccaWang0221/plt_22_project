@@ -48,6 +48,7 @@ rule token = parse
   | "while"  { WHILE }
   | "do"  { DO }
   | "range"  { RANGE }
+  | "irange"  { IRANGE }
   | "return"  { RETURN }
   | "break"  { BREAK }
   | "continue"  { CONT }
