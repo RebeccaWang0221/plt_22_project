@@ -62,7 +62,7 @@ stmt:
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
-  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, List.rev $4) }
+  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, $4) }
   | PRINT LPAREN expr RPAREN SEMI  { Print($3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }

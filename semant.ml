@@ -279,15 +279,19 @@ let check stmts vars funcs =
 	  	in
 			(match t1 with
 			  | List(ty) ->
-				  if ty = t2 then
-					  match e1 with
-						  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-							| _ -> raise (Failure ("can only assign to a variable"))
-					else raise (Failure err)
+				  (match e2 with
+					  | SListLit(s_lst) ->
+						  if ty = t2 then
+							  match e1 with
+								  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+									| _ -> raise (Failure ("can only assign to a variable"))
+							else raise (Failure err)
+						| _ -> raise (Failure (err)))
 				| _ ->
 			  	if t1 = t2 then
 			  	  match e1 with
 			  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+							| SAccess(id, num) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
 			  	    | _ -> raise (Failure ("can only assign to a variable"))
 			  	else raise (Failure err))
 
@@ -299,8 +303,11 @@ let check stmts vars funcs =
 			in
 			(match t1 with
 			  | List(ty) ->
-				  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-					else raise (Failure err)
+				  (match e2 with
+					  | SListLit(s_lst) ->
+						  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+							else raise (Failure err)
+						| _ -> raise (Failure err))
 				| _ ->
 					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 					else raise (Failure err))

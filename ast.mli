@@ -42,6 +42,7 @@ type stmt =
   | Append of expr * expr
   | Remove of expr * expr
   | Insert of expr * expr * expr
+  | ListAssign of expr * expr * expr
   | Cont
   | Break
   | Pass
