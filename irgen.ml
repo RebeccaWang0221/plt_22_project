@@ -557,6 +557,7 @@ let translate stmts =
       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
       let entry_bb = L.append_block context "range_entry" the_function in (* entry point *)
       ignore(L.build_br entry_bb builder);
+      ignore(L.position_at_end entry_bb builder);
       let body_bb = L.append_block context "range_body" the_function in
       ignore(build_body (L.builder_at_end context body_bb) the_function body); (* build body inside of body_bb *)
       let body_builder = L.builder_at_end context body_bb in
