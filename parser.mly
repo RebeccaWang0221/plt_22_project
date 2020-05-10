@@ -76,6 +76,7 @@ dstmt:
 expr:
     BLIT  { BoolLit($1) }
   | INTLIT  { IntLit($1) }
+  | MINUS INTLIT  { IntLit(-$2) }
   | FLOATLIT  { FloatLit($1) }
   | STRLIT  { StrLit($1) }
   | CHARLIT  { CharLit($1) }
