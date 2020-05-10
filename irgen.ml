@@ -587,6 +587,7 @@ let translate stmts =
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
       Hashtbl.clear local_vars;
       L.builder_at_end context end_bb
+    | SIRange(v1, v2, body) -> raise (Failure ("not yet implemented"))
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
       ignore(L.build_br do_bb builder); (* force it to execute at least once *)
