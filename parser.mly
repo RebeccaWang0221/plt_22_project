@@ -5,7 +5,7 @@
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
 %token ARRAY LIST STCT DEF RANGE
-%token APPEND REMOVE INSERT POP INDEX
+%token APPEND REMOVE INSERT POP INDEX LEN
 %token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -22,7 +22,7 @@
 %nonassoc LBRACK
 %left OR
 %left AND
-%left EQ NEQ
+%left EQ NEQ IN
 %left LT GT LTE GTE
 %left PLUS MINUS
 %right PEQ MEQ
@@ -48,7 +48,9 @@ stmt:
   | list_funcs  { $1 }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
-  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $9) }
+  | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, IntLit(0), $6, IntLit(1), $9) }
+  | FOR vdecl IN RANGE LPAREN expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, IntLit(1), $11) }
+  | FOR vdecl IN RANGE LPAREN expr COMMA expr COMMA expr RPAREN LBRACE stmt_list RBRACE  { Range($2, $6, $8, $10, $13) }
   | FOR vdecl IN expr LBRACE stmt_list RBRACE  { For($2, $4, $6) }
   | DO LBRACE stmt_list RBRACE WHILE expr SEMI { Do($3, $6) }
   | expr PEQ expr SEMI  { Assign($1, Binop($1, Add, $3)) }
@@ -92,12 +94,15 @@ expr:
   | expr EXP expr  { Binop($1, Exp, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
+  | expr IN expr  { Binop($1, In, $3) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
+  | LEN LPAREN expr RPAREN  { Len($3) }
   | expr LBRACK expr RBRACK  { Access($1, $3) }
   | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
   | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }
+  | LBRACK args RBRACK  { ListLit($2) }
 
 typ:
     INT  { Int }
@@ -138,6 +143,7 @@ array_decl:
 
 list_decl:
     LIST LT typ GT ID  { Bind(List($3), $5) }
+  | LIST LT typ GT ID ASSIGN expr  { DecAssign(Bind(List($3), $5), $7) }
 
 list_funcs:
     expr DOT APPEND LPAREN expr RPAREN SEMI  { Append($1, $5) }

@@ -127,6 +127,17 @@ char *pop_str(struct StrList *lst, int idx) {
     }
 }
 
+int str_list_size(struct StrList *lst) {
+    return lst->size;
+}
+
+char contains_str(struct StrList *lst, char *val) {
+    if (index_str(lst, val) == -1) {
+        return 0;
+    }
+    return 1;
+}
+
 void print_str_list(struct StrList *lst) {
     struct StrNode *curr = lst->head;
     while (curr != NULL) {

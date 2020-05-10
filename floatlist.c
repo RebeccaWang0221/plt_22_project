@@ -126,6 +126,17 @@ double pop_float(struct FloatList *lst, int idx) {
     }
 }
 
+int float_list_size(struct FloatList *lst) {
+    return lst->size;
+}
+
+char contains_float(struct FloatList *lst, double val) {
+    if (index_float(lst, val) == -1) {
+        return 0;
+    }
+    return 1;
+}
+
 void print_float_list(struct FloatList *lst) {
     struct FloatNode *curr = lst->head;
     while (curr != NULL) {

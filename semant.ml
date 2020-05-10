@@ -36,6 +36,18 @@ let check stmts vars funcs =
 
 	  | Id var -> (var_map, func_map, (type_of_var var_map var, SId var))
 
+		| ListLit(e_lst) ->
+		  let (_, _, (t, _)) = check_expr var_map func_map (List.hd e_lst) in
+			let rec build_list_lit ty = function
+			  | [] -> []
+				| _ as st :: tail ->
+				  let (_, _, (t1, e1)) = check_expr var_map func_map st in
+					if t1 <> ty then raise (Failure ("types of list elements must match"))
+					else (t1, e1) :: build_list_lit ty tail
+			in
+			let se_lst = build_list_lit t e_lst in
+			(var_map, func_map, (t, SListLit(se_lst)))
+
 	  | Binop(ex1, op, ex2) -> (* check ex1 and ex2 recursively *)
 	  	let (_, _, (t1, e1)) = check_expr var_map func_map ex1
 	  	and (_, _, (t2, e2)) = check_expr var_map func_map ex2 in
@@ -65,6 +77,9 @@ let check stmts vars funcs =
             | Add | Sub | Mult | Div | Exp when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Float
 						| Add when ((t1 = String && t2 = Char) || (t1 = Char && t2 = String)) -> String
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
+						| In -> match t2 with
+							  | List(ty) when ty = t1 -> Bool
+								| _ -> raise (Failure ("types do not match"))
 	  	    | _ -> raise (Failure err)
 	  	  in
 	  	  (var_map, func_map, (t, SBinop((t1, e1), op, (t2, e2))))
@@ -117,6 +132,13 @@ let check stmts vars funcs =
 					| List(ty) -> (var_map, func_map, (ty, SPop((t1, e1), (t2, e2))))
 					| _ -> raise (Failure ("pop must be called on list type"))
 			else raise (Failure ("index must be of type int"))
+
+		| Len(e) ->
+		  let (_, _, (t1, e1)) = check_expr var_map func_map e in
+			match t1 with
+			  | String -> (var_map, func_map, (Int, SLen((t1, e1))))
+				| List(ty) -> (var_map, func_map, (Int, SLen((t1, e1))))
+				| _ -> raise (Failure ("len expression cannot be called with type " ^ string_of_typ t1))
 
 	  | _ -> raise (Failure ("invalid expression"))
 
@@ -226,46 +248,24 @@ let check stmts vars funcs =
 	      | _ -> raise (Failure ("invalid variable declaration in for loop"))
 	    and body = check_stmt_list m func_map st2_lst
 	    and (_, _, (t2, e2)) = check_expr m func_map ex in
-	    let ret = match t1 with
-	      | Int ->
-	        (match t2 with
-	          | List(ty) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Int -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Float ->
-	        (match t2 with
-	          | List(ty) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Float -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Char ->
-	        (match t2 with
-	          | List(ty) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Char -> (m, func_map, SFor(s, (t2, e2), body))
-	          | String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | Bool ->
-	        (match t2 with
-	          | List(ty) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = Bool -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match")))
-	      | String ->
-	        (match t2 with
-	          | List(ty) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | Array(ty, e) when ty = String -> (m, func_map, SFor(s, (t2, e2), body))
-	          | _ -> raise (Failure ("types of iterator variable and object elements do not match"))
-	      | _ -> raise (Failure ("cannot iterate over object with type " ^ string_of_typ t1)))
-	    in ret
+	    (match t2 with
+			  | List(ty) when ty = t1 -> (m, func_map, SFor(s, (t2, e2), body))
+				| Array(ty, e) when ty = t1 -> (m, func_map, SFor(s, (t2, e2), body))
+				| String when t1 = Char -> (m, func_map, SFor(s, (t2, e2), body))
+				| _ -> raise (Failure ("types of iterator variable and object elements do not match")))
 
-	  | Range(st1, ex, st2_lst) ->
+	  | Range(st1, e1, e2, e3, st2_lst) ->
 	  	let (m1, _, s1) = check_stmt var_map func_map st1 in
 	  	let SBind(t1, e1) = s1
-	  	and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
-	    let sst_lst = check_stmt_list m2 func_map st2_lst in
-	  	if t1 = t2 then
-	  	  match t1 with
-	  	    | _ when (t1 = Int && t2 = Int) -> (m2, func_map, SRange(s1, (t2, e2), sst_lst))
+	  	and (_, _, (t2, e2)) = check_expr m1 func_map e1
+			and (_, _, (t3, e3)) = check_expr m1 func_map e2
+			and (_, _, (t4, e4)) = check_expr m1 func_map e3 in
+	    let sst_lst = check_stmt_list m1 func_map st2_lst in
+	  	if t1 = Int then
+	  	  match t2 with
+	  	    | Int when (t3 = Int && t4 = Int) -> (m1, func_map, SRange(s1, (t2, e2), (t3, e3), (t4, e4), sst_lst))
 	  	    | _ -> raise (Failure ("for-range loop must be used with int types"))
-	  	else raise (Failure("for-range loop must be used with int types but given types do not match"))
+	  	else raise (Failure("for-range loop must be used with int types"))
 
 	  | Do(st_lst, ex) -> (var_map, func_map, SDo(check_stmt_list var_map func_map st_lst, check_bool_expr var_map func_map ex))
 
@@ -277,11 +277,19 @@ let check stmts vars funcs =
 	  	let (m2, _, (t2, e2)) = check_expr m1 func_map ex2 in
 	  	let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
 	  	in
-	  	if t1 = t2 then
-	  	  match e1 with
-	  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-	  	    | _ -> raise (Failure ("cannot assign to anything other than a variable"))
-	  	else raise (Failure err)
+			(match t1 with
+			  | List(ty) ->
+				  if ty = t2 then
+					  match e1 with
+						  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+							| _ -> raise (Failure ("can only assign to a variable"))
+					else raise (Failure err)
+				| _ ->
+			  	if t1 = t2 then
+			  	  match e1 with
+			  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+			  	    | _ -> raise (Failure ("can only assign to a variable"))
+			  	else raise (Failure err))
 
 	  | DecAssign(st, ex) ->
 	    let (m1, _, s) = check_stmt var_map func_map st in
@@ -289,8 +297,13 @@ let check stmts vars funcs =
 	    and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
 	    let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
 			in
-			if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
-			else raise (Failure err)
+			(match t1 with
+			  | List(ty) ->
+				  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+					else raise (Failure err)
+				| _ ->
+					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
+					else raise (Failure err))
 
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in

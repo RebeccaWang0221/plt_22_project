@@ -27,3 +27,7 @@ int index_int(struct IntList *lst, int val);
 int pop_int(struct IntList *lst, int idx);
 
 void free_int_list(struct IntList *lst);
+
+char contains_int(struct IntList *lst, int val);
+
+int int_list_size(struct IntList *lst);

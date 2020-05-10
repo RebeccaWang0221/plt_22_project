@@ -42,7 +42,7 @@ let translate stmts =
     | Ast.String -> string_t
     | Ast.Char -> string_t
     | Ast.Void -> i1_t
-    | Ast.List(Ast.Int) -> int_list_t
+    | Ast.List(Ast.Int) | Ast.List(Ast.Bool) -> int_list_t
     | Ast.List(Ast.Float) -> float_list_t
     | Ast.List(Ast.String) | Ast.List(Ast.Char) -> str_list_t
   in
@@ -65,6 +65,13 @@ let translate stmts =
   let str_diff : L.llvalue = L.declare_function "str_diff" str_cmp_t the_module in
   let str_concat_t : L.lltype = L.function_type string_t [| string_t ; string_t |] in
   let str_concat : L.llvalue = L.declare_function "str_concat" str_concat_t the_module in
+  let str_size_t : L.lltype = L.function_type i32_t [| string_t |] in
+  let str_size : L.llvalue = L.declare_function "str_size" str_size_t the_module in
+
+  let pow_int_t : L.lltype = L.function_type i32_t [| i32_t ; i32_t |] in
+  let pow_int : L.llvalue = L.declare_function "pow_int" pow_int_t the_module in
+  let pow_float_t : L.lltype = L.function_type float_t [| float_t ; float_t |] in
+  let pow_float : L.llvalue = L.declare_function "pow_float" pow_float_t the_module in
 
   let init_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t |] in
   let init_int_list : L.llvalue = L.declare_function "init_int_list" init_int_list_t the_module in
@@ -78,6 +85,10 @@ let translate stmts =
   let insert_int : L.llvalue = L.declare_function "insert_int" insert_int_t the_module in
   let pop_int : L.llvalue = L.declare_function "pop_int" get_int_t the_module in
   let index_of_int : L.llvalue = L.declare_function "index_int" get_int_t the_module in
+  let int_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t |] in
+  let int_list_size : L.llvalue = L.declare_function "int_list_size" int_list_size_t the_module in
+  let contains_int_t : L.lltype = L.function_type i1_t [| L.pointer_type int_list_t ; i32_t |] in
+  let contains_int : L.llvalue = L.declare_function "contains_int" contains_int_t the_module in
 
   let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
   let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
@@ -93,6 +104,10 @@ let translate stmts =
   let pop_float : L.llvalue = L.declare_function "pop_float" get_float_t the_module in
   let index_of_float_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t ; float_t |] in
   let index_of_float : L.llvalue = L.declare_function "index_float" index_of_float_t the_module in
+  let float_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t |] in
+  let float_list_size : L.llvalue = L.declare_function "float_list_size" float_list_size_t the_module in
+  let contains_float_t : L.lltype = L.function_type i1_t [| L.pointer_type float_list_t ; float_t |] in
+  let contains_float : L.llvalue = L.declare_function "contains_float" contains_float_t the_module in
 
   let init_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t |] in
   let init_str_list : L.llvalue = L.declare_function "init_str_list" init_str_list_t the_module in
@@ -108,6 +123,10 @@ let translate stmts =
   let pop_str : L.llvalue = L.declare_function "pop_str" get_str_t the_module in
   let index_of_str_t : L.lltype = L.function_type i32_t [| L.pointer_type str_list_t ; string_t |] in
   let index_of_str : L.llvalue = L.declare_function "index_str" index_of_str_t the_module in
+  let str_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type str_list_t |] in
+  let str_list_size : L.llvalue = L.declare_function "str_list_size" str_list_size_t the_module in
+  let contains_str_t : L.lltype = L.function_type i1_t [| L.pointer_type str_list_t ; string_t |] in
+  let contains_str : L.llvalue = L.declare_function "contains_str" contains_str_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -158,6 +177,7 @@ let translate stmts =
                     let int_e1 = build_expr builder e1 in
                     let e1' = L.build_sitofp int_e1 float_t "int_to_float" builder
                     and e2' = build_expr builder e2 in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -170,6 +190,7 @@ let translate stmts =
                     let e1' = build_expr builder e1
                     and int_e2 = build_expr builder e2 in
                     let e2' = L.build_sitofp int_e2 float_t "int_to_float" builder in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -179,6 +200,7 @@ let translate stmts =
                   | Float ->
                     let e1' = build_expr builder e1
                     and e2' = build_expr builder e2 in
+                    if op = Exp then L.build_call pow_float [| e1' ; e2' |] "" builder else
                     (match op with
                       | Ast.Add -> L.build_fadd
                       | Ast.Sub -> L.build_fsub
@@ -197,6 +219,12 @@ let translate stmts =
             and (t2, _) = e2 in
             (match t1 with
               | Int ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_int [| pointer ; e1' |] "" builder
+                else
                 (match t2 with
                   | Int ->
                     let e1' = build_expr builder e1
@@ -222,6 +250,12 @@ let translate stmts =
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
               | Float ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_float [| pointer ; e1' |] "" builder
+                else
                 (match t2 with
                   | Float ->
                     let e1' = build_expr builder e1
@@ -247,6 +281,12 @@ let translate stmts =
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
               | Char ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in
                 (match op with
@@ -254,22 +294,29 @@ let translate stmts =
                   | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
                   | _ -> raise (Failure ("invalid comparison operation on chars")))
               | String ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in
                 (match op with
                   | Ast.Eq -> L.build_call str_cmp [| e1' ; e2' |] "" builder
                   | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
-                  | _ -> raise (Failure ("invalid comparison operation on strings")))
+                  | _ -> raise (Failure ("invalid comparison operation on strings"))))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
+            if op = Exp then L.build_call pow_int [| e1' ; e2' |] "" builder else
         	  (match op with
           	  | Ast.Add -> L.build_add
           		| Ast.Sub -> L.build_sub
           		| Ast.Div -> L.build_sdiv
           		| Ast.Mult-> L.build_mul
           		| Ast.Mod -> L.build_srem
-       		  ) e1' e2' "int_binop" builder))
+       		  ) e1' e2' "int_binop" builder)
       | SUnop(id, unop) ->
         let var = lookup id in
         let var_val = L.build_load var "load" builder in
@@ -293,7 +340,7 @@ let translate stmts =
         let pointer = lookup s in
         let idx = build_expr builder e in
         (match t with
-          | Int -> L.build_call get_int [| pointer ; idx |] "" builder
+          | Int | Bool -> L.build_call get_int [| pointer ; idx |] "" builder
           | Float -> L.build_call get_float [| pointer ; idx |] "" builder
           | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
       | SIndex(id, e) ->
@@ -302,6 +349,7 @@ let translate stmts =
         let v = build_expr builder e in
         (match t with
           | Int -> L.build_call index_of_int [| pointer ; v |] "" builder
+          | Bool -> L.build_call index_of_int [| pointer ; (L.const_intcast v i32_t false) |] "" builder
           | Float -> L.build_call index_of_float [| pointer ; v |] "" builder
           | String | Char -> L.build_call index_of_str [| pointer ; v |] "" builder)
       | SPop(id, e) ->
@@ -309,9 +357,41 @@ let translate stmts =
         let pointer = lookup s in
         let v = build_expr builder e in
         (match t with
-          | Int -> L.build_call pop_int [| pointer; v |] "" builder
+          | Int | Bool -> L.build_call pop_int [| pointer; v |] "" builder
           | Float -> L.build_call pop_float [| pointer; v |] "" builder
           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
+
+      | SLen(e) ->
+        let (t1, e1) = e in
+        (match t1 with
+          | String ->
+            let v = build_expr builder e in
+            L.build_call str_size [| v |] "" builder
+          | List(ty) ->
+            let SId(s) = e1 in
+            let pointer = lookup s in
+            match ty with
+              | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
+              | Float -> L.build_call float_list_size [| pointer |] "" builder
+              | String | Char -> L.build_call str_list_size [| pointer |] "" builder)
+
+  in
+
+  let rec build_list_lit p = function
+    | [] -> []
+    | _ as ex :: tail ->
+      let (t, _) = ex in
+      let v1 = build_expr builder ex in
+      (match t with
+        | Int | Bool ->
+          L.build_call append_int [| p ; v1 |] "" builder;
+          build_list_lit p tail
+        | Float ->
+          L.build_call append_float [| p ; v1 |] "" builder;
+          build_list_lit p tail
+        | String | Char ->
+          L.build_call append_str [| p ; v1 |] "" builder;
+          build_list_lit p tail)
 
   in
 
@@ -352,7 +432,7 @@ let translate stmts =
       (match ty with
         | List(t) ->
           (match t with
-          | Int ->
+          | Int | Bool ->
             L.build_call init_int_list [| pointer |] "" builder;
             Hashtbl.add global_vars id pointer;
             builder
@@ -421,11 +501,61 @@ let translate stmts =
       ignore(L.build_br entry_bb (L.builder_at_end context while_body)); (* branch to entry_bb at end of while_bb *)
       ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end context entry_bb)); (* conditional branch to while_body or end_body at the end of entry_bb *)
       L.builder_at_end context end_bb
-  	| SFor(var, e, body) -> (* TODO: no clue how to do this yet *)
-      builder
-  	| SRange(var, e, body) -> (* TEST *)
+  	| SFor(var, e, body) ->
       let SBind(t, n) = var in
-      let start_val = L.const_int i32_t 0 in (* create start val at 0 *)
+      let (_, SId(s)) = e in (* only works for ids *)
+      let start_iter_val = L.const_int i32_t 0 in (* index of list/string starts at 0 *)
+      let iterator = L.build_alloca i32_t "iter" builder in (* allocate for the iterator *)
+      let iter_value_p = (match t with (* allocate for the list/string iterator value *)
+        | Int -> L.build_alloca i32_t "iter_val" builder
+        | Float -> L.build_alloca float_t "iter_val" builder
+        | String | Char -> L.build_alloca string_t "iter_val" builder
+        | Bool -> L.build_alloca i1_t "iter_val" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      Hashtbl.add local_vars "for_iter" iterator; (* add iterator  *)
+      Hashtbl.add local_vars n iter_value_p; (* add iterator value *)
+      ignore(L.build_store start_iter_val iterator builder); (* store iterator *)
+      let lst_pointer = lookup s in
+      let iter_value = (match t with (* get value for first list element *)
+        | Int | Bool -> L.build_call get_int [| lst_pointer ; start_iter_val |] "" builder
+        | Float -> L.build_call get_float [| lst_pointer ; start_iter_val |] "" builder
+        | String | Char -> L.build_call get_str [| lst_pointer ; start_iter_val |] "" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_store iter_value iter_value_p builder);
+      let entry_bb = L.append_block context "for_entry" the_function in
+      let end_val = (match t with
+        | Int | Bool -> L.build_call int_list_size [| lst_pointer |] "end_val" builder
+        | Float -> L.build_call float_list_size [| lst_pointer |] "end_val" builder
+        | String | Char -> L.build_call str_list_size [| lst_pointer |] "end_val" builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_br entry_bb builder);
+      let body_bb = L.append_block context "for_body" the_function in
+      ignore(build_body (L.builder_at_end context body_bb) the_function body);
+      let body_builder = L.builder_at_end context body_bb in
+      let idx_val = L.build_load iterator "load_iter" body_builder in
+      let next_val = L.build_add idx_val (L.const_int i32_t 1) "next_val" body_builder in
+      ignore(L.build_store next_val iterator body_builder);
+      let iter_value = (match t with (* get value for first list element *)
+        | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" body_builder
+        | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" body_builder
+        | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" body_builder
+        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      in
+      ignore(L.build_store iter_value iter_value_p body_builder);
+      ignore(L.build_br entry_bb body_builder);
+      let end_bb = L.append_block context "for_end" the_function in
+      let entry_builder = L.builder_at_end context entry_bb in
+      let curr_val = L.build_load iterator "load_iter" entry_builder in
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in
+      ignore(L.build_cond_br cond end_bb body_bb entry_builder);
+      Hashtbl.clear local_vars;
+      L.builder_at_end context end_bb
+  	| SRange(var, beg, ed, st, body) -> (* TEST *)
+      let SBind(t, n) = var in
+      let start_val = build_expr builder beg in (* create start val at 0 *)
       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
       Hashtbl.add local_vars n iterator;
       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
@@ -435,15 +565,16 @@ let translate stmts =
       ignore(build_body (L.builder_at_end context body_bb) the_function body); (* build body inside of body_bb *)
       let body_builder = L.builder_at_end context body_bb in
       let tmp_val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
-      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in (* increment iterator value by 1 *)
+      let next_val = L.build_add tmp_val (build_expr builder st) "next_val" body_builder in (* increment iterator value by 1 *)
       ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
       ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
       let end_bb = L.append_block context "range_end" the_function in
-      let end_val = build_expr builder e in
+      let end_val = build_expr builder ed in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
-      let cond = L.build_icmp L.Icmp.Eq curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
+      Hashtbl.clear local_vars;
       L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
@@ -458,20 +589,34 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
-      let e' = build_expr builder e in
-      let name = match s with
-        | (t, SId(n)) -> n
+      let (ty, name) = match s with
+        | (t, SId(n)) -> (t, n)
       in
-      ignore(L.build_store e' (lookup name) builder); builder (* build store function to load value into register *)
+      (match ty with
+        | List(t) ->
+          let pointer = lookup name in
+          let (_, SListLit(lst)) = e in
+          ignore(build_list_lit pointer lst); builder
+        | _ ->
+          let e' = build_expr builder e in
+          ignore(L.build_store e' (lookup name) builder); builder) (* build store function to load value into register *)
   	| SDecAssign(s, e) ->
       let (ty, id) = match s with
         | SBind(t, e) -> (t, e)
         | _ -> raise (Failure ("invalid declaration"))
       in
-      let e' = build_expr builder e in
-      let pointer = L.build_alloca (ltype_of_typ ty) id builder in
-      Hashtbl.add global_vars id pointer;
-      ignore(L.build_store e' pointer builder); builder (* build store function to load value into register *)
+      (match ty with
+        | List(t1) ->
+          let _ = build_stmt builder the_function s in
+          let pointer = lookup id in
+          let (_, SListLit(lst)) = e in
+          ignore(build_list_lit pointer lst);
+          builder
+        | _ ->
+          let e' = build_expr builder e in
+          let pointer = L.build_alloca (ltype_of_typ ty) id builder in
+          Hashtbl.add global_vars id pointer;
+          ignore(L.build_store e' pointer builder); builder) (* build store function to load value into register *)
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->
@@ -499,7 +644,7 @@ let translate stmts =
         | (List(t), SId(s)) ->
           let pointer = lookup s in
           match t with
-            | Int -> L.build_call print_int_list [| pointer |] "" builder; builder
+            | Int | Bool -> L.build_call print_int_list [| pointer |] "" builder; builder
             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
     | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
@@ -508,6 +653,7 @@ let translate stmts =
       let value = build_expr builder e2 in
       (match t with
         | Int -> L.build_call append_int [| pointer ; value |] "" builder; builder
+        | Bool -> L.build_call append_int [| pointer ; (L.const_intcast value i32_t false) |] "" builder; builder
         | Float -> L.build_call append_float [| pointer ; value |] "" builder; builder
         | String | Char -> L.build_call append_str [| pointer ; value |] "" builder; builder)
     | SRemove(e1, e2) ->
@@ -515,7 +661,7 @@ let translate stmts =
       let pointer = lookup s in
       let idx = build_expr builder e2 in
       (match t with
-        | Int -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
+        | Int | Bool -> L.build_call remove_int [| pointer ; idx |] "" builder; builder
         | Float -> L.build_call remove_float [| pointer ; idx |] "" builder; builder
         | String | Char -> L.build_call remove_str [| pointer ; idx |] "" builder; builder)
     | SInsert(e1, e2, e3) ->
@@ -525,11 +671,12 @@ let translate stmts =
       let v = build_expr builder e3 in
       (match t with
         | Int -> L.build_call insert_int [| pointer ; idx ; v |] "" builder; builder
+        | Bool -> L.build_call insert_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder; builder
         | Float -> L.build_call insert_float [| pointer ; idx ; v |] "" builder; builder
         | String | Char -> L.build_call insert_str [| pointer ; idx ; v |] "" builder; builder)
-  	| SCont -> builder (* TODO *)
-  	| SBreak -> builder (* TODO *)
-  	| SPass -> builder (* TODO *)
+  	| SCont -> raise (Failure ("continue not yet implemented"))
+  	| SBreak -> raise (Failure ("break not yet implemented"))
+  	| SPass -> raise (Failure ("pass not yet implemented"))
 
   in
 

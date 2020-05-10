@@ -15,6 +15,7 @@ let string_of_op = function
   | And -> "and"
   | Or -> "or"
   | Exp -> "**"
+  | In -> "in"
 
 let rec string_of_typ = function
     Int -> "int"

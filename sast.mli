@@ -7,7 +7,7 @@ and sx =
   | SBoolLit of bool
   | SFloatLit of float
   | SCharLit of string
-  | SLstLit of expr list
+  | SListLit of sexpr list
   | SId of string
   | SBinop of sexpr * op * sexpr
   | SUnop of string * un
@@ -16,6 +16,7 @@ and sx =
   | SSlice of string * sexpr * sexpr
   | SIndex of sexpr * sexpr
   | SPop of sexpr * sexpr
+  | SLen of sexpr
 
 type sstmt =
   | SExpr of sexpr
@@ -26,7 +27,7 @@ type sstmt =
   | SElse of sstmt list
   | SWhile of sexpr * sstmt list
   | SFor of sstmt * sexpr * sstmt list
-  | SRange of sstmt * sexpr * sstmt list
+  | SRange of sstmt * sexpr * sexpr * sexpr * sstmt list
   | SDo of sstmt list * sexpr
   | SReturn of sexpr
   | SAssign of sexpr * sexpr
