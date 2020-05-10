@@ -57,6 +57,8 @@ let translate stmts =
   let str_concat : L.llvalue = L.declare_function "str_concat" str_concat_t the_module in
   let str_size_t : L.lltype = L.function_type i32_t [| string_t |] in
   let str_size : L.llvalue = L.declare_function "str_size" str_size_t the_module in
+  let contains_strstr_t : L.lltype = L.function_type i1_t [| string_t ; string_t |] in
+  let contains_strstr : L.llvalue = L.declare_function "contains_strstr" contains_strstr_t the_module in
 
   let pow_int_t : L.lltype = L.function_type i32_t [| i32_t ; i32_t |] in
   let pow_int : L.llvalue = L.declare_function "pow_int" pow_int_t the_module in
@@ -275,10 +277,16 @@ let translate stmts =
                     ) e1' e2' "bool_binop" builder)
               | Char ->
                 if op = In then
-                  let (_, SId(s)) = e2 in
-                  let pointer = lookup s in
-                  let e1' = build_expr builder e1 in
-                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                  let (ty, SId(s)) = e2 in
+                  (match ty with
+                    | List(t1) ->
+                      let pointer = lookup s in
+                      let e1' = build_expr builder e1 in
+                      L.build_call contains_str [| pointer ; e1' |] "" builder
+                    | _ ->
+                      let e1' = build_expr builder e1
+                      and e2' = build_expr builder e2 in
+                      L.build_call contains_strstr [| e2' ; e1' |] "" builder)
                 else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in

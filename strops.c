@@ -35,3 +35,11 @@ int str_size(char *s) {
     }
     return len;
 }
+
+char contains_strstr(char *s, char *c) {
+    if (strstr(s, c) == NULL) {
+        return 0;
+    } else {
+        return 1;
+    }
+}

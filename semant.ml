@@ -79,6 +79,7 @@ let check stmts vars funcs =
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
 						| In -> match t2 with
 							  | List(ty) when ty = t1 -> Bool
+								| String when t1 = Char -> Bool
 								| _ -> raise (Failure ("types do not match"))
 	  	    | _ -> raise (Failure err)
 	  	  in
