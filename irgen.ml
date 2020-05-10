@@ -87,6 +87,8 @@ let translate stmts =
   let index_of_int : L.llvalue = L.declare_function "index_int" get_int_t the_module in
   let int_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type int_list_t |] in
   let int_list_size : L.llvalue = L.declare_function "int_list_size" int_list_size_t the_module in
+  let contains_int_t : L.lltype = L.function_type i1_t [| L.pointer_type int_list_t ; i32_t |] in
+  let contains_int : L.llvalue = L.declare_function "contains_int" contains_int_t the_module in
 
   let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
   let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
@@ -104,6 +106,8 @@ let translate stmts =
   let index_of_float : L.llvalue = L.declare_function "index_float" index_of_float_t the_module in
   let float_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type float_list_t |] in
   let float_list_size : L.llvalue = L.declare_function "float_list_size" float_list_size_t the_module in
+  let contains_float_t : L.lltype = L.function_type i1_t [| L.pointer_type float_list_t ; float_t |] in
+  let contains_float : L.llvalue = L.declare_function "contains_float" contains_float_t the_module in
 
   let init_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t |] in
   let init_str_list : L.llvalue = L.declare_function "init_str_list" init_str_list_t the_module in
@@ -121,6 +125,8 @@ let translate stmts =
   let index_of_str : L.llvalue = L.declare_function "index_str" index_of_str_t the_module in
   let str_list_size_t : L.lltype = L.function_type i32_t [| L.pointer_type str_list_t |] in
   let str_list_size : L.llvalue = L.declare_function "str_list_size" str_list_size_t the_module in
+  let contains_str_t : L.lltype = L.function_type i1_t [| L.pointer_type str_list_t ; string_t |] in
+  let contains_str : L.llvalue = L.declare_function "contains_str" contains_str_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -213,6 +219,12 @@ let translate stmts =
             and (t2, _) = e2 in
             (match t1 with
               | Int ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_int [| pointer ; e1' |] "" builder
+                else
                 (match t2 with
                   | Int ->
                     let e1' = build_expr builder e1
@@ -238,6 +250,12 @@ let translate stmts =
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
               | Float ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_float [| pointer ; e1' |] "" builder
+                else
                 (match t2 with
                   | Float ->
                     let e1' = build_expr builder e1
@@ -263,6 +281,12 @@ let translate stmts =
                       | Ast.Lte -> L.build_fcmp L.Fcmp.Ole
                     ) e1' e2' "bool_binop" builder)
               | Char ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in
                 (match op with
@@ -270,6 +294,12 @@ let translate stmts =
                   | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
                   | _ -> raise (Failure ("invalid comparison operation on chars")))
               | String ->
+                if op = In then
+                  let (_, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in
                 (match op with

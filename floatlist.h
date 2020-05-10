@@ -28,4 +28,6 @@ double pop_float(struct FloatList *lst, int idx);
 
 int float_list_size(struct FloatList *lst);
 
+char contains_float(struct FloatList *lst, double val);
+
 void free_float_list(struct FloatList *lst);

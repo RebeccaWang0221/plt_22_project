@@ -130,6 +130,13 @@ int int_list_size(struct IntList *lst) {
     return lst->size;
 }
 
+char contains_int(struct IntList *lst, int val) {
+    if (index_int(lst, val) == -1) {
+        return 0;
+    }
+    return 1;
+}
+
 void print_int_list(struct IntList *lst) {
     struct IntNode *curr = lst->head;
     while (curr != NULL) {

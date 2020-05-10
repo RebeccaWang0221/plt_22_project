@@ -28,4 +28,6 @@ char *pop_str(struct StrList *lst, int idx);
 
 int str_list_size(struct StrList *lst);
 
+char contains_str(struct StrList *lst, char *val);
+
 void free_str_list(struct StrList *lst);

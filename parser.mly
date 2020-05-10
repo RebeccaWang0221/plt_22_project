@@ -22,7 +22,7 @@
 %nonassoc LBRACK
 %left OR
 %left AND
-%left EQ NEQ
+%left EQ NEQ IN
 %left LT GT LTE GTE
 %left PLUS MINUS
 %right PEQ MEQ
@@ -94,6 +94,7 @@ expr:
   | expr EXP expr  { Binop($1, Exp, $3) }
   | expr AND expr  { Binop($1, And, $3) }
   | expr OR expr  { Binop($1, Or, $3) }
+  | expr IN expr  { Binop($1, In, $3) }
   | NOT ID  { Unop($2, Not) }
   | LPAREN expr RPAREN  { $2 }
   | ID LPAREN args_opt RPAREN  { Call($1, $3) }
