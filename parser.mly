@@ -46,6 +46,7 @@ stmt:
   | array_decl SEMI  { $1 }
   | list_decl SEMI  { $1 }
   | list_funcs  { $1 }
+  | typ ID LBRACK expr RBRACK SEMI  { Bind(Array($1, $4), $2) }
   | IF expr LBRACE stmt_list RBRACE dstmt  { If($2, $4, $6) }
   | WHILE expr LBRACE stmt_list RBRACE  { While($2, $4) }
   | FOR vdecl IN RANGE LPAREN expr RPAREN LBRACE stmt_list RBRACE  { Range($2, IntLit(0), $6, IntLit(1), $9) }

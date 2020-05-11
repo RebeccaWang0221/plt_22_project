@@ -221,8 +221,16 @@ let check stmts vars funcs =
 
 	  | Bind(ty, st) ->
 	    if ty <> Void then
-	      let m = add_var var_map st ty in
-	      (m, func_map, SBind(ty, st))
+			  (match ty with
+				  | Array(t, e) ->
+					  let (_, _, (t1, e1)) = check_expr var_map func_map e in
+						if t1 <> Int then raise (Failure ("array initialization expected expression of type int but got expression of type " ^ string_of_typ t1))
+						else
+						let m = add_var var_map st ty in
+						(m, func_map, SBind(ty, st))
+					| _ ->
+			      let m = add_var var_map st ty in
+			      (m, func_map, SBind(ty, st)))
 	    else raise (Failure ("cannot declare variable with void type"))
 
 	  | FuncDef(vdec, formals, body) -> (* add func def to map *)
@@ -335,6 +343,7 @@ let check stmts vars funcs =
 	    let t = match t1 with
 	      | Int | Float | Bool | String | Char -> t1
 				| List x -> t1
+				| Array(x1, x2) -> t1
 	      | _ -> raise (Failure ("cannot print expression of type " ^ string_of_typ t1))
 	    in
 	    (var_map, func_map, SPrint((t1, e1)))

@@ -35,6 +35,15 @@ let translate stmts =
   let str_list_t = L.named_struct_type context "StrList" in
   let _ = L.struct_set_body str_list_t [| L.pointer_type str_node_t ; i32_t |] false in
 
+  let int_arr_t = L.named_struct_type context "IntArray" in
+  let _ = L.struct_set_body int_arr_t [| L.pointer_type i32_t ; i32_t |] false in
+
+  let float_arr_t = L.named_struct_type context "FloatArray" in
+  let _ = L.struct_set_body float_arr_t [| L.pointer_type float_t ; i32_t |] false in
+
+  let str_arr_t = L.named_struct_type context "StrArray" in
+  let _ = L.struct_set_body str_arr_t [| L.pointer_type string_t ; i32_t |] false in
+
   let ltype_of_typ = function
     | Ast.Int -> i32_t
     | Ast.Bool -> i1_t
@@ -45,6 +54,9 @@ let translate stmts =
     | Ast.List(Ast.Int) | Ast.List(Ast.Bool) -> int_list_t
     | Ast.List(Ast.Float) -> float_list_t
     | Ast.List(Ast.String) | Ast.List(Ast.Char) -> str_list_t
+    | Ast.Array(Ast.Int, _) | Ast.Array(Ast.Bool, _) -> int_arr_t
+    | Ast.Array(Ast.Float, _) -> float_arr_t
+    | Ast.Array(Ast.String, _) | Ast.Array(Ast.Char, _) -> str_arr_t
   in
 
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
@@ -122,6 +134,45 @@ let translate stmts =
   let contains_str_t : L.lltype = L.function_type i1_t [| L.pointer_type str_list_t ; string_t |] in
   let contains_str : L.llvalue = L.declare_function "contains_str" contains_str_t the_module in
   let assign_str : L.llvalue = L.declare_function "assign_str" insert_str_t the_module in
+
+  let init_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t ; i32_t |] in
+  let init_int_arr : L.llvalue = L.declare_function "init_int_arr" init_int_arr_t the_module in
+  let assign_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t ; i32_t ; i32_t |] in
+  let assign_int_arr : L.llvalue = L.declare_function "assign_int_arr" assign_int_arr_t the_module in
+  let get_int_arr_t : L.lltype = L.function_type i32_t [| L.pointer_type int_arr_t ; i32_t |] in
+  let get_int_arr : L.llvalue = L.declare_function "get_int_arr" get_int_arr_t the_module in
+  let int_arr_size_t : L.lltype = L.function_type i32_t [| L.pointer_type int_arr_t |] in
+  let int_arr_size : L.llvalue = L.declare_function "int_arr_size" int_arr_size_t the_module in
+  let contains_int_arr_t : L.lltype = L.function_type i1_t [| L.pointer_type int_arr_t ; i32_t |] in
+  let contains_int_arr : L.llvalue = L.declare_function "contains_int_arr" contains_int_arr_t the_module in
+  let print_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t |] in
+  let print_int_arr : L.llvalue = L.declare_function "print_int_arr" print_int_arr_t the_module in
+
+  let init_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t ; i32_t |] in
+  let init_float_arr : L.llvalue = L.declare_function "init_float_arr" init_float_arr_t the_module in
+  let assign_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t ; i32_t ; float_t |] in
+  let assign_float_arr : L.llvalue = L.declare_function "assign_float_arr" assign_float_arr_t the_module in
+  let get_float_arr_t : L.lltype = L.function_type float_t [| L.pointer_type float_arr_t ; i32_t |] in
+  let get_float_arr : L.llvalue = L.declare_function "get_float_arr" get_float_arr_t the_module in
+  let float_arr_size_t : L.lltype = L.function_type i32_t [| L.pointer_type float_arr_t |] in
+  let float_arr_size : L.llvalue = L.declare_function "float_arr_size" float_arr_size_t the_module in
+  let contains_float_arr_t : L.lltype = L.function_type i1_t [| L.pointer_type float_arr_t ; float_t |] in
+  let contains_float_arr : L.llvalue = L.declare_function "contains_float_arr" contains_float_arr_t the_module in
+  let print_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t |] in
+  let print_float_arr : L.llvalue = L.declare_function "print_float_arr" print_float_arr_t the_module in
+
+  let init_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t ; i32_t |] in
+  let init_str_arr : L.llvalue = L.declare_function "init_str_arr" init_str_arr_t the_module in
+  let assign_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t ; i32_t ; string_t |] in
+  let assign_str_arr : L.llvalue = L.declare_function "assign_str_arr" assign_str_arr_t the_module in
+  let get_str_arr_t : L.lltype = L.function_type string_t [| L.pointer_type str_arr_t ; i32_t |] in
+  let get_str_arr : L.llvalue = L.declare_function "get_str_arr" get_str_arr_t the_module in
+  let str_arr_size_t : L.lltype = L.function_type i32_t [| L.pointer_type str_arr_t |] in
+  let str_arr_size : L.llvalue = L.declare_function "str_arr_size" str_arr_size_t the_module in
+  let contains_str_arr_t : L.lltype = L.function_type i1_t [| L.pointer_type str_arr_t ; string_t |] in
+  let contains_str_arr : L.llvalue = L.declare_function "contains_str_arr" contains_str_arr_t the_module in
+  let print_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t |] in
+  let print_str_arr : L.llvalue = L.declare_function "print_str_arr" print_str_arr_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -448,6 +499,22 @@ let translate stmts =
             L.build_call init_str_list [| pointer |] "" builder;
             Hashtbl.add global_vars id pointer;
             builder)
+        | Array(t, sz) ->
+          let IntLit(s) = sz in
+          let size = L.const_int i32_t s in
+          (match t with
+            | Int | Bool ->
+              L.build_call init_int_arr [| pointer ; size |] "" builder;
+              Hashtbl.add global_vars id pointer;
+              builder
+            | Float ->
+              L.build_call init_float_arr [| pointer ; size |] "" builder;
+              Hashtbl.add global_vars id pointer;
+              builder
+            | String | Char ->
+              L.build_call init_str_arr [| pointer ; size |] "" builder;
+              Hashtbl.add global_vars id pointer;
+              builder)
         | _ -> Hashtbl.add global_vars id pointer;
           builder)
   	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
@@ -641,19 +708,28 @@ let translate stmts =
               let pointer = lookup name in
               let (_, SListLit(lst)) = e in
               ignore(build_list_lit pointer builder lst); builder
+            | Array(t, sz) -> raise (Failure ("hhhhh"));
             | _ ->
               let e' = build_expr builder e in
               ignore(L.build_store e' (lookup name) builder); builder)
         | (ty, SAccess(e1, e2)) ->
-          let (_, SId(s)) = e1 in
+          let (t, SId(s)) = e1 in
           let pointer = lookup s in
           let idx = build_expr builder e2 in
           let v = build_expr builder e in
-          (match ty with
-            | Int -> ignore(L.build_call assign_int [| pointer ; idx ; v |] "" builder); builder
-            | Bool -> ignore(L.build_call assign_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder); builder
-            | String | Char -> ignore(L.build_call assign_str [| pointer ; idx ; v |] "" builder); builder
-            | Float -> ignore(L.build_call assign_float [| pointer ; idx ; v |] "" builder); builder))
+          (match t with
+            | List(x) ->
+              (match ty with
+                | Int -> ignore(L.build_call assign_int [| pointer ; idx ; v |] "" builder); builder
+                | Bool -> ignore(L.build_call assign_int [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder); builder
+                | String | Char -> ignore(L.build_call assign_str [| pointer ; idx ; v |] "" builder); builder
+                | Float -> ignore(L.build_call assign_float [| pointer ; idx ; v |] "" builder); builder)
+            | Array(t1, x) ->
+              (match t1 with
+                | Int -> ignore(L.build_call assign_int_arr [| pointer ; idx ; v |] "" builder); builder
+                | Bool -> ignore(L.build_call assign_int_arr [| pointer ; idx ; (L.const_intcast v i32_t false) |] "" builder); builder
+                | String | Char -> ignore(L.build_call assign_str_arr [| pointer ; idx ; v |] "" builder); builder
+                | Float -> ignore(L.build_call assign_float_arr [| pointer ; idx ; v |] "" builder); builder)))
   	| SDecAssign(s, e) ->
       let (ty, id) = match s with
         | SBind(t, e) -> (t, e)
@@ -697,10 +773,16 @@ let translate stmts =
           builder
         | (List(t), SId(s)) ->
           let pointer = lookup s in
-          match t with
+          (match t with
             | Int | Bool -> L.build_call print_int_list [| pointer |] "" builder; builder
             | Float -> L.build_call print_float_list [| pointer |] "" builder; builder
             | String | Char -> L.build_call print_str_list [| pointer |] "" builder; builder)
+        | (Array(t, sz), SId(s)) ->
+          let pointer = lookup s in
+          (match t with
+            | Int | Bool -> L.build_call print_int_arr [| pointer |] "" builder; builder
+            | Float -> L.build_call print_float_arr [| pointer |] "" builder; builder
+            | String | Char -> L.build_call print_str_arr [| pointer |] "" builder; builder))
     | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
       let (List(t), SId(s)) = e1 in
       let pointer = lookup s in
