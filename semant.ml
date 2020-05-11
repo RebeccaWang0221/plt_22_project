@@ -79,6 +79,7 @@ let check stmts vars funcs =
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
 						| In -> match t2 with
 							  | List(ty) when ty = t1 -> Bool
+								| Array(ty, _) when ty = t1 -> Bool
 								| String when t1 = Char -> Bool
 								| _ -> raise (Failure ("types do not match"))
 	  	    | _ -> raise (Failure err)
@@ -139,6 +140,7 @@ let check stmts vars funcs =
 			match t1 with
 			  | String -> (var_map, func_map, (Int, SLen((t1, e1))))
 				| List(ty) -> (var_map, func_map, (Int, SLen((t1, e1))))
+				| Array(ty, sz) -> (var_map, func_map, (Int, SLen((t1, e1))))
 				| _ -> raise (Failure ("len expression cannot be called with type " ^ string_of_typ t1))
 
 	  | _ -> raise (Failure ("invalid expression"))

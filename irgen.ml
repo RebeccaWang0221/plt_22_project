@@ -266,10 +266,12 @@ let translate stmts =
             (match t1 with
               | Int ->
                 if op = In then
-                  let (_, SId(s)) = e2 in
+                  let (ty, SId(s)) = e2 in
                   let pointer = lookup s in
                   let e1' = build_expr builder e1 in
-                  L.build_call contains_int [| pointer ; e1' |] "" builder
+                  (match ty with
+                    | List(_) -> L.build_call contains_int [| pointer ; e1' |] "" builder
+                    | Array(_, _) -> L.build_call contains_int_arr [| pointer ; e1' |] "" builder)
                 else
                 (match t2 with
                   | Int ->
@@ -297,10 +299,12 @@ let translate stmts =
                     ) e1' e2' "bool_binop" builder)
               | Float ->
                 if op = In then
-                  let (_, SId(s)) = e2 in
+                  let (ty, SId(s)) = e2 in
                   let pointer = lookup s in
                   let e1' = build_expr builder e1 in
-                  L.build_call contains_float [| pointer ; e1' |] "" builder
+                  (match ty with
+                    | List(_) -> L.build_call contains_float [| pointer ; e1' |] "" builder
+                    | Array(_, _) -> L.build_call contains_float_arr [| pointer ; e1' |] "" builder)
                 else
                 (match t2 with
                   | Float ->
@@ -334,6 +338,10 @@ let translate stmts =
                       let pointer = lookup s in
                       let e1' = build_expr builder e1 in
                       L.build_call contains_str [| pointer ; e1' |] "" builder
+                    | Array(_, _) ->
+                      let pointer = lookup s in
+                      let e1' = build_expr builder e1 in
+                      L.build_call contains_str_arr [| pointer ; e1' |] "" builder
                     | _ ->
                       let e1' = build_expr builder e1
                       and e2' = build_expr builder e2 in
@@ -347,17 +355,28 @@ let translate stmts =
                   | _ -> raise (Failure ("invalid comparison operation on chars")))
               | String ->
                 if op = In then
-                  let (_, SId(s)) = e2 in
+                  let (ty, SId(s)) = e2 in
                   let pointer = lookup s in
                   let e1' = build_expr builder e1 in
-                  L.build_call contains_str [| pointer ; e1' |] "" builder
+                  (match ty with
+                    | List(_) -> L.build_call contains_str [| pointer ; e1' |] "" builder
+                    | Array(_, _) -> L.build_call contains_str_arr [| pointer ; e1' |] "" builder)
                 else
                 let e1' = build_expr builder e1
                 and e2' = build_expr builder e2 in
                 (match op with
                   | Ast.Eq -> L.build_call str_cmp [| e1' ; e2' |] "" builder
                   | Ast.Neq -> L.build_call str_diff [| e1' ; e2' |] "" builder
-                  | _ -> raise (Failure ("invalid comparison operation on strings"))))
+                  | _ -> raise (Failure ("invalid comparison operation on strings")))
+              | Bool ->
+                if op = In then
+                  let (ty, SId(s)) = e2 in
+                  let pointer = lookup s in
+                  let e1' = build_expr builder e1 in
+                  (match ty with
+                    | List(_) -> L.build_call contains_int [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder
+                    | Array(_, _) -> L.build_call contains_int_arr [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder)
+                else raise (Failure ("invalid operation")))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
         	  and e2' = build_expr builder e2 in
@@ -388,13 +407,21 @@ let translate stmts =
         else let args1 = Array.map (build_expr builder) args_arr in
         L.build_call callee args1 "call_func" builder
       | SAccess(id, e) ->
-        let (List(t), SId(s)) = id in
-        let pointer = lookup s in
-        let idx = build_expr builder e in
-        (match t with
-          | Int | Bool -> L.build_call get_int [| pointer ; idx |] "" builder
-          | Float -> L.build_call get_float [| pointer ; idx |] "" builder
-          | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+        (match id with
+          | (List(t), SId(s)) ->
+            let pointer = lookup s in
+            let idx = build_expr builder e in
+            (match t with
+              | Int | Bool -> L.build_call get_int [| pointer ; idx |] "" builder
+              | Float -> L.build_call get_float [| pointer ; idx |] "" builder
+              | String | Char -> L.build_call get_str [| pointer ; idx |] "" builder)
+          | (Array(t, sz), SId(s)) ->
+            let pointer = lookup s in
+            let idx = build_expr builder e in
+            (match t with
+              | Int | Bool -> L.build_call get_int_arr [| pointer ; idx |] "" builder
+              | Float -> L.build_call get_float_arr [| pointer ; idx |] "" builder
+              | String | Char -> L.build_call get_str_arr [| pointer ; idx |] "" builder))
       | SIndex(id, e) ->
         let (List(t), SId(s)) = id in
         let pointer = lookup s in
@@ -412,7 +439,6 @@ let translate stmts =
           | Int | Bool -> L.build_call pop_int [| pointer; v |] "" builder
           | Float -> L.build_call pop_float [| pointer; v |] "" builder
           | String | Char -> L.build_call pop_str [| pointer; v |] "" builder)
-
       | SLen(e) ->
         let (t1, e1) = e in
         (match t1 with
@@ -422,10 +448,17 @@ let translate stmts =
           | List(ty) ->
             let SId(s) = e1 in
             let pointer = lookup s in
-            match ty with
+            (match ty with
               | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
               | Float -> L.build_call float_list_size [| pointer |] "" builder
               | String | Char -> L.build_call str_list_size [| pointer |] "" builder)
+          | Array(ty, sz) ->
+            let SId(s) = e1 in
+            let pointer = lookup s in
+            (match ty with
+              | Int | Bool -> L.build_call int_arr_size [| pointer |] "" builder
+              | Float -> L.build_call float_arr_size [| pointer |] "" builder
+              | String | Char -> L.build_call str_arr_size [| pointer |] "" builder))
 
   in
 
