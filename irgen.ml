@@ -583,11 +583,44 @@ let translate stmts =
       let end_val = build_expr builder ed in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
-      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in (* then check if it equals end_val *)
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "range_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
       Hashtbl.clear local_vars;
       L.builder_at_end context end_bb
-    | SIRange(v1, v2, body) -> raise (Failure ("not yet implemented"))
+    | SIRange(v1, v2, body) ->
+      let SBind(t, n) = v1 in
+      let start_val = L.const_int i32_t 0 in
+      let iterator = L.build_alloca i32_t "iter" builder in
+      Hashtbl.add local_vars n iterator;
+      ignore(L.build_store start_val iterator builder);
+      let entry_bb = L.append_block context "irange_body" the_function in
+      ignore(L.build_br entry_bb builder);
+      ignore(L.position_at_end entry_bb builder);
+      let body_bb = L.append_block context "irange_body" the_function in
+      ignore(build_body (L.builder_at_end context body_bb) the_function body);
+      let body_builder = L.builder_at_end context body_bb in
+      let tmp_val = L.build_load iterator "load_iter" body_builder in
+      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in
+      ignore(L.build_store next_val iterator body_builder);
+      ignore(L.build_br entry_bb body_builder);
+      let end_bb = L.append_block context "range_end" the_function in
+      let (ty, id) = match v2 with
+        | (List(ty), SId(s)) -> (ty, s)
+        | _ -> raise (Failure ("irange requires a list"))
+      in
+      let pointer = lookup id in
+      let end_val = match ty with
+        | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
+        | String | Char -> L.build_call str_list_size [| pointer |] "" builder
+        | Float -> L.build_call float_list_size [| pointer |] "" builder
+        | _ -> raise (Failure ("invalid list type"))
+      in
+      let entry_builder = L.builder_at_end context entry_bb in
+      let curr_val = L.build_load iterator "load_iter" entry_builder in
+      let cond = L.build_icmp L.Icmp.Sge curr_val end_val "irange_cmp" entry_builder in
+      ignore(L.build_cond_br cond end_bb body_bb entry_builder);
+      Hashtbl.clear local_vars;
+      L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
       ignore(L.build_br do_bb builder); (* force it to execute at least once *)
