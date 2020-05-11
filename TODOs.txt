@@ -2,8 +2,7 @@
 List of TODOs that need implementing:
 
 	Current:
-	  - finish irange in irgen
-		- array
+		- array literals
 		- for loop char in string
 
 	Bugs:
