@@ -483,6 +483,27 @@ let translate stmts =
 
   in
 
+  let rec build_arr_lit p b idx = function
+    | [] -> []
+    | _ as ex :: tail ->
+      let (t, _) = ex in
+      let v1 = build_expr b ex in
+      (match t with
+        | Int ->
+          L.build_call assign_int_arr [| p ; (L.const_int i32_t idx) ; v1 |] "" b;
+          build_arr_lit p b (idx + 1) tail
+        | Bool ->
+          L.build_call assign_int_arr [| p ; (L.const_int i32_t idx) ; (L.const_intcast v1 i32_t false) |] "" b;
+          build_arr_lit p b (idx + 1) tail
+        | Float ->
+          L.build_call assign_float_arr [| p ; (L.const_int i32_t idx) ; v1 |] "" b;
+          build_arr_lit p b (idx + 1) tail
+        | String | Char ->
+          L.build_call assign_str_arr [| p ; (L.const_int i32_t idx) ; v1 |] "" b;
+          build_arr_lit p b (idx + 1) tail)
+
+  in
+
   let rec build_body b f = function
     | [] -> b
     | _ as st :: tail ->
@@ -780,6 +801,18 @@ let translate stmts =
           let pointer = L.build_alloca (ltype_of_typ ty) id builder in
           Hashtbl.add global_vars id pointer;
           ignore(L.build_store e' pointer builder); builder) (* build store function to load value into register *)
+    | SArrayAssign(s, e_lst) ->
+      let (ty, id) = match s with
+        | SBind(t, e) -> (t, e)
+        | _ -> raise (Failure ("invalid array declaration and assignment"))
+      in
+      (match ty with
+        | Array(t, _) ->
+          let _ = build_stmt builder the_function s in
+          let pointer = lookup id in
+          ignore(build_arr_lit pointer builder 0 e_lst);
+          builder
+        | _ -> raise (Failure ("invalid array declaration and assignment")))
   	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
       builder
     | SPrint(e) ->

@@ -335,6 +335,26 @@ let check stmts vars funcs =
 					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 					else raise (Failure err))
 
+		| ArrayAssign(st, e_lst) ->
+		  let (m1, _, s) = check_stmt var_map func_map st in
+			let (t1, e1) = match s with
+			  | SBind(t, e) -> (t, e)
+				| _ -> raise (Failure ("can only assign to a variable"))
+			in
+			let (arr_t, size) = match t1 with
+			  | Array(t, IntLit(sz)) -> (t, sz)
+				| _ -> raise (Failure ("cannot assign to array"))
+			in
+			let rec check_lit_list = function
+			  | [] -> []
+				| _ as e :: tail ->
+				  let (_, _, (t2, e2)) = check_expr m1 func_map e in
+					if t2 = arr_t then (t2, e2) :: check_lit_list tail
+					else raise (Failure ("array literal expected type " ^ string_of_typ arr_t ^ " but got type " ^ string_of_typ t2))
+			in
+			let se_lst = check_lit_list e_lst in
+			(m1, func_map, SArrayAssign(s, se_lst))
+
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in
 	  	let var_map' = add_var var_map s Stct in
