@@ -71,6 +71,8 @@ let translate stmts =
   let str_size : L.llvalue = L.declare_function "str_size" str_size_t the_module in
   let contains_strstr_t : L.lltype = L.function_type i1_t [| string_t ; string_t |] in
   let contains_strstr : L.llvalue = L.declare_function "contains_strstr" contains_strstr_t the_module in
+  let access_str_t : L.lltype = L.function_type string_t [| string_t ; i32_t |] in
+  let access_str : L.llvalue = L.declare_function "access_str" access_str_t the_module in
 
   let pow_int_t : L.lltype = L.function_type i32_t [| i32_t ; i32_t |] in
   let pow_int : L.llvalue = L.declare_function "pow_int" pow_int_t the_module in
@@ -421,7 +423,11 @@ let translate stmts =
             (match t with
               | Int | Bool -> L.build_call get_int_arr [| pointer ; idx |] "" builder
               | Float -> L.build_call get_float_arr [| pointer ; idx |] "" builder
-              | String | Char -> L.build_call get_str_arr [| pointer ; idx |] "" builder))
+              | String | Char -> L.build_call get_str_arr [| pointer ; idx |] "" builder)
+          | (String, _) ->
+            let s1 = build_expr builder id in
+            let idx = build_expr builder e in
+            L.build_call access_str [| s1 ; idx |] "" builder)
       | SIndex(id, e) ->
         let (List(t), SId(s)) = id in
         let pointer = lookup s in

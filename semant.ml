@@ -114,7 +114,8 @@ let check stmts vars funcs =
 	      match t1 with
 	        | List(ty) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
 	        | Array(ty, e) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
-	        | _ -> raise (Failure ("invalid access on non list/array type"))
+					| String -> (var_map, func_map, (Char, SAccess((t1, e1), (t2, e2))))
+	        | _ -> raise (Failure ("invalid access on non list/array/string type"))
 			else raise (Failure ("list/array access index must be of type int"))
 
 		| Index(id, e) ->

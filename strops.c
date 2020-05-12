@@ -43,3 +43,13 @@ char contains_strstr(char *s, char *c) {
         return 1;
     }
 }
+
+char *access_str(char *s, int idx) {
+    if (idx < str_size(s)) {
+      char ch = s[idx];
+      char *ch2 = (char *)malloc(sizeof(char));
+      *ch2 = ch;
+      return ch2;
+    }
+    return "";
+}
