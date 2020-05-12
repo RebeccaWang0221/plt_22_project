@@ -690,6 +690,7 @@ let translate stmts =
       let iterator = L.build_alloca i32_t "iter" builder in (* allocate stack space for iterator var *)
       Hashtbl.add local_vars n iterator;
       ignore(L.build_store start_val iterator builder); (* store initial value for iterator *)
+      let end_val = build_expr builder ed in
       let entry_bb = L.append_block context "range_entry" the_function in (* entry point *)
       ignore(L.build_br entry_bb builder);
       ignore(L.position_at_end entry_bb builder);
@@ -701,7 +702,6 @@ let translate stmts =
       ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
       ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
       let end_bb = L.append_block context "range_end" the_function in
-      let end_val = build_expr builder ed in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "range_cmp" entry_builder in (* then check if it equals end_val *)
@@ -714,6 +714,22 @@ let translate stmts =
       let iterator = L.build_alloca i32_t "iter" builder in
       Hashtbl.add local_vars n iterator;
       ignore(L.build_store start_val iterator builder);
+      let end_val = match v2 with
+        | (List(ty), SId(s)) ->
+          let pointer = lookup s in
+          (match ty with
+            | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
+            | String | Char -> L.build_call str_list_size [| pointer |] "" builder
+            | Float -> L.build_call float_list_size [| pointer |] "" builder
+            | _ -> raise (Failure ("invalid list type")))
+        | (Array(ty, _), SId(s)) ->
+          let pointer = lookup s in
+          (match ty with
+            | Int | Bool -> L.build_call int_arr_size [| pointer |] "" builder
+            | String | Char -> L.build_call str_arr_size [| pointer |] "" builder
+            | Float -> L.build_call float_arr_size [| pointer |] "" builder
+            | _ -> raise (Failure ("invalid list type")))
+      in
       let entry_bb = L.append_block context "irange_body" the_function in
       ignore(L.build_br entry_bb builder);
       ignore(L.position_at_end entry_bb builder);
@@ -725,17 +741,6 @@ let translate stmts =
       ignore(L.build_store next_val iterator body_builder);
       ignore(L.build_br entry_bb body_builder);
       let end_bb = L.append_block context "range_end" the_function in
-      let (ty, id) = match v2 with
-        | (List(ty), SId(s)) -> (ty, s)
-        | _ -> raise (Failure ("irange requires a list"))
-      in
-      let pointer = lookup id in
-      let end_val = match ty with
-        | Int | Bool -> L.build_call int_list_size [| pointer |] "" builder
-        | String | Char -> L.build_call str_list_size [| pointer |] "" builder
-        | Float -> L.build_call float_list_size [| pointer |] "" builder
-        | _ -> raise (Failure ("invalid list type"))
-      in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "irange_cmp" entry_builder in

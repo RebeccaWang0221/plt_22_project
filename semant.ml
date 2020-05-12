@@ -286,7 +286,7 @@ let check stmts vars funcs =
 			if t1 = Int then
 				match t2 with
 				  | List(ty) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
-					| Array(ty, e) -> raise (Failure ("not yet implemented"))
+					| Array(ty, e) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
 					| _ -> raise (Failure ("irange loop cannot be used with expression of type " ^ string_of_typ t2))
 			else raise (Failure("for-irange loop must be used with variable of type int"))
 
