@@ -640,7 +640,7 @@ let translate stmts =
       L.builder_at_end context end_bb
   	| SFor(var, e, body) ->
       let SBind(t, n) = var in
-      let (_, SId(s)) = e in (* only works for ids *)
+      let (ty, SId(s)) = e in (* only works for ids *)
       let start_iter_val = L.const_int i32_t 0 in (* index of list/string starts at 0 *)
       let iterator = L.build_alloca i32_t "iter" builder in (* allocate for the iterator *)
       let iter_value_p = (match t with (* allocate for the list/string iterator value *)
@@ -653,20 +653,31 @@ let translate stmts =
       Hashtbl.add local_vars "for_iter" iterator; (* add iterator  *)
       Hashtbl.add local_vars n iter_value_p; (* add iterator value *)
       ignore(L.build_store start_iter_val iterator builder); (* store iterator *)
-      let lst_pointer = lookup s in
-      let iter_value = (match t with (* get value for first list element *)
-        | Int | Bool -> L.build_call get_int [| lst_pointer ; start_iter_val |] "" builder
-        | Float -> L.build_call get_float [| lst_pointer ; start_iter_val |] "" builder
-        | String | Char -> L.build_call get_str [| lst_pointer ; start_iter_val |] "" builder
-        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      let iter_value = (match ty with
+        | String ->
+          let str_p = build_expr builder e in
+          L.build_call access_str [| str_p ; start_iter_val |] "" builder
+        | _ ->
+          let lst_pointer = lookup s in
+          (match t with
+            | Int | Bool -> L.build_call get_int [| lst_pointer ; start_iter_val |] "" builder
+            | Float -> L.build_call get_float [| lst_pointer ; start_iter_val |] "" builder
+            | String | Char -> L.build_call get_str [| lst_pointer ; start_iter_val |] "" builder
+            | _ -> raise (Failure ("invalid type on for loop iteration"))))
       in
       ignore(L.build_store iter_value iter_value_p builder);
       let entry_bb = L.append_block context "for_entry" the_function in
-      let end_val = (match t with
-        | Int | Bool -> L.build_call int_list_size [| lst_pointer |] "end_val" builder
-        | Float -> L.build_call float_list_size [| lst_pointer |] "end_val" builder
-        | String | Char -> L.build_call str_list_size [| lst_pointer |] "end_val" builder
-        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      let end_val = (match ty with
+        | String ->
+          let str_p = build_expr builder e in
+          L.build_call str_size [| str_p |] "end_val" builder
+        | _ ->
+          let lst_pointer = lookup s in
+          (match t with
+            | Int | Bool -> L.build_call int_list_size [| lst_pointer |] "end_val" builder
+            | Float -> L.build_call float_list_size [| lst_pointer |] "end_val" builder
+            | String | Char -> L.build_call str_list_size [| lst_pointer |] "end_val" builder
+            | _ -> raise (Failure ("invalid type on for loop iteration"))))
       in
       ignore(L.build_br entry_bb builder);
       let body_bb = L.append_block context "for_body" the_function in
@@ -675,11 +686,17 @@ let translate stmts =
       let idx_val = L.build_load iterator "load_iter" body_builder in
       let next_val = L.build_add idx_val (L.const_int i32_t 1) "next_val" body_builder in
       ignore(L.build_store next_val iterator body_builder);
-      let iter_value = (match t with (* get value for first list element *)
-        | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" body_builder
-        | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" body_builder
-        | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" body_builder
-        | _ -> raise (Failure ("invalid type on for loop iteration")))
+      let iter_value = (match ty with
+        | String ->
+          let str_p = build_expr body_builder e in
+          L.build_call access_str [| str_p ; next_val |] "" body_builder
+        | _ ->
+          let lst_pointer = lookup s in
+          (match t with
+            | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" body_builder
+            | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" body_builder
+            | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" body_builder
+            | _ -> raise (Failure ("invalid type on for loop iteration"))))
       in
       ignore(L.build_store iter_value iter_value_p body_builder);
       ignore(L.build_br entry_bb body_builder);
