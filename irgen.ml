@@ -62,7 +62,7 @@ let translate stmts =
   let printf_t : L.lltype = L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
   let printf_func : L.llvalue = L.declare_function "printf" printf_t the_module in
 
-  let str_cmp_t : L.lltype = L.function_type i32_t [| string_t ; string_t |] in
+  let str_cmp_t : L.lltype = L.function_type i1_t [| string_t ; string_t |] in
   let str_cmp : L.llvalue = L.declare_function "str_comp" str_cmp_t the_module in
   let str_diff : L.llvalue = L.declare_function "str_diff" str_cmp_t the_module in
   let str_concat_t : L.lltype = L.function_type string_t [| string_t ; string_t |] in
@@ -410,7 +410,13 @@ let translate stmts =
                     | List(_) -> L.build_call contains_int [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder
                     | Array(_, _) -> L.build_call contains_int_arr [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder
                     | _ -> raise (Failure ("invalid in operation")))
-                else raise (Failure ("invalid operation"))
+                else
+                let e1' = build_expr builder e1
+                and e2' = build_expr builder e2 in
+                (match op with
+                  | Ast.And -> L.build_and e1' e2' "and" builder
+                  | Ast.Or -> L.build_or e1' e2' "or" builder
+                  | _ -> raise (Failure ("invalid operation on bool types")))
               | _ -> raise (Failure ("invalid binary operation of type bool")))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
@@ -764,39 +770,41 @@ let translate stmts =
       in
       ignore(L.build_br entry_bb builder);
       let body_bb = L.append_block context "for_body" the_function in
-      ignore(build_body (L.builder_at_end context body_bb) the_function body);
-      let body_builder = L.builder_at_end context body_bb in
-      let idx_val = L.build_load iterator "load_iter" body_builder in
-      let next_val = L.build_add idx_val (L.const_int i32_t 1) "next_val" body_builder in
-      ignore(L.build_store next_val iterator body_builder);
+      let body_builder = build_body (L.builder_at_end context body_bb) the_function body in
+      let step_bb = L.append_block context "for_step" the_function in
+      ignore(L.build_br step_bb body_builder);
+      let step_builder = L.builder_at_end context step_bb in
+      let idx_val = L.build_load iterator "load_iter" step_builder in
+      let next_val = L.build_add idx_val (L.const_int i32_t 1) "next_val" step_builder in
+      ignore(L.build_store next_val iterator step_builder);
       let iter_value = (match ty with
         | String ->
-          let str_p = build_expr body_builder e in
-          L.build_call access_str [| str_p ; next_val |] "" body_builder
+          let str_p = build_expr step_builder e in
+          L.build_call access_str [| str_p ; next_val |] "" step_builder
         | List(_) ->
           let lst_pointer = lookup s in
           (match t with
-            | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" body_builder
-            | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" body_builder
-            | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" body_builder
+            | Int | Bool -> L.build_call get_int [| lst_pointer ; next_val |] "" step_builder
+            | Float -> L.build_call get_float [| lst_pointer ; next_val |] "" step_builder
+            | String | Char -> L.build_call get_str [| lst_pointer ; next_val |] "" step_builder
             | _ -> raise (Failure ("invalid type on for loop iteration")))
         | Array(_, _) ->
           let arr_pointer = lookup s in
           (match t with
-            | Int | Bool -> L.build_call get_int_arr [| arr_pointer ; next_val |] "" body_builder
-            | Float -> L.build_call get_float_arr [| arr_pointer ; next_val |] "" body_builder
-            | String | Char -> L.build_call get_str_arr [| arr_pointer ; next_val |] "" body_builder
+            | Int | Bool -> L.build_call get_int_arr [| arr_pointer ; next_val |] "" step_builder
+            | Float -> L.build_call get_float_arr [| arr_pointer ; next_val |] "" step_builder
+            | String | Char -> L.build_call get_str_arr [| arr_pointer ; next_val |] "" step_builder
             | _ -> raise (Failure ("invalid type on for loop iteration")))
         | _ -> raise (Failure ("invalid for declaration")))
       in
-      ignore(L.build_store iter_value iter_value_p body_builder);
-      ignore(L.build_br entry_bb body_builder);
+      ignore(L.build_store iter_value iter_value_p step_builder);
+      ignore(L.build_br entry_bb step_builder);
       let end_bb = L.append_block context "for_end" the_function in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
   	| SRange(var, beg, ed, st, body) -> (* TEST *)
       let (t, n) = (match var with
@@ -812,18 +820,20 @@ let translate stmts =
       ignore(L.build_br entry_bb builder);
       ignore(L.position_at_end entry_bb builder);
       let body_bb = L.append_block context "range_body" the_function in
-      ignore(build_body (L.builder_at_end context body_bb) the_function body); (* build body inside of body_bb *)
-      let body_builder = L.builder_at_end context body_bb in
-      let tmp_val = L.build_load iterator "load_iter" body_builder in (* load iterator value from stack space *)
-      let next_val = L.build_add tmp_val (build_expr builder st) "next_val" body_builder in (* increment iterator value by 1 *)
-      ignore(L.build_store next_val iterator body_builder); (* store incremented iterator value on stack *)
-      ignore(L.build_br entry_bb body_builder); (* branch back to entry_bb *)
+      let body_builder = build_body (L.builder_at_end context body_bb) the_function body in (* build body inside of body_bb *)
+      let step_bb = L.append_block context "range_step" the_function in
+      ignore(L.build_br step_bb body_builder);
+      let step_builder = L.builder_at_end context step_bb in
+      let tmp_val = L.build_load iterator "load_iter" step_builder in (* load iterator value from stack space *)
+      let next_val = L.build_add tmp_val (build_expr step_builder st) "next_val" step_builder in (* increment iterator value by 1 *)
+      ignore(L.build_store next_val iterator step_builder); (* store incremented iterator value on stack *)
+      ignore(L.build_br entry_bb step_builder); (* branch back to entry_bb *)
       let end_bb = L.append_block context "range_end" the_function in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "range_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
     | SIRange(v1, v2, body) ->
       let (t, n) = (match v1 with
@@ -851,22 +861,24 @@ let translate stmts =
             | _ -> raise (Failure ("invalid list type")))
         | _ -> raise (Failure ("invalid irange declaration")))
       in
-      let entry_bb = L.append_block context "irange_body" the_function in
+      let entry_bb = L.append_block context "irange_entry" the_function in
       ignore(L.build_br entry_bb builder);
       ignore(L.position_at_end entry_bb builder);
       let body_bb = L.append_block context "irange_body" the_function in
-      ignore(build_body (L.builder_at_end context body_bb) the_function body);
-      let body_builder = L.builder_at_end context body_bb in
-      let tmp_val = L.build_load iterator "load_iter" body_builder in
-      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" body_builder in
-      ignore(L.build_store next_val iterator body_builder);
-      ignore(L.build_br entry_bb body_builder);
+      let body_builder = build_body (L.builder_at_end context body_bb) the_function body in
+      let step_bb = L.append_block context "irange_step" the_function in
+      ignore(L.build_br step_bb body_builder);
+      let step_builder = L.builder_at_end context step_bb in
+      let tmp_val = L.build_load iterator "load_iter" step_builder in
+      let next_val = L.build_add tmp_val (L.const_int i32_t 1) "next_val" step_builder in
+      ignore(L.build_store next_val iterator step_builder);
+      ignore(L.build_br entry_bb step_builder);
       let end_bb = L.append_block context "range_end" the_function in
       let entry_builder = L.builder_at_end context entry_bb in
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "irange_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
