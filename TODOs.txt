@@ -2,8 +2,6 @@
 List of TODOs that need implementing:
 
 	Current:
-		- array literals
-		- for loop char in string
 
 	Bugs:
 		- if_end block does not get terminator when inside of a function so an error occurs, only problematic if there
