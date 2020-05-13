@@ -2,6 +2,7 @@
 List of TODOs that need implementing:
 
 	Current:
+	 - regular assign for arrays
 
 	Bugs:
 		- if_end block does not get terminator when inside of a function so an error occurs, only problematic if there

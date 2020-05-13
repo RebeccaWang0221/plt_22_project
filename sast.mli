@@ -8,6 +8,7 @@ and sx =
   | SFloatLit of float
   | SCharLit of string
   | SListLit of sexpr list
+  | SArrayLit of sexpr list
   | SId of string
   | SBinop of sexpr * op * sexpr
   | SUnop of string * un
