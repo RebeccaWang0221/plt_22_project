@@ -700,9 +700,9 @@ let translate stmts =
       ignore (L.build_br entry_bb builder);
       let cond = build_expr (L.builder_at_end context entry_bb) e in (* build conditional inside of entry block *)
       let while_body = L.append_block context "while_body" the_function in
-      ignore(build_body (L.builder_at_end context while_body) the_function body); (* build body inside of while_body block *)
+      let body_builder = build_body (L.builder_at_end context while_body) the_function body in (* build body inside of while_body block *)
       let end_bb = L.append_block context "while_end" the_function in
-      ignore(L.build_br entry_bb (L.builder_at_end context while_body)); (* branch to entry_bb at end of while_bb *)
+      ignore(L.build_br entry_bb body_builder); (* branch to entry_bb at end of while_bb *)
       ignore(L.build_cond_br cond while_body end_bb (L.builder_at_end context entry_bb)); (* conditional branch to while_body or end_body at the end of entry_bb *)
       L.builder_at_end context end_bb
   	| SFor(var, e, body) ->
@@ -883,13 +883,13 @@ let translate stmts =
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
       ignore(L.build_br do_bb builder); (* force it to execute at least once *)
-      ignore(build_body (L.builder_at_end context do_bb) the_function body);
+      let body_builder = build_body (L.builder_at_end context do_bb) the_function body in
       let while_bb = L.append_block context "dowhile_cond" the_function in
       let end_bb = L.append_block context "do_end" the_function in
       let while_builder = L.builder_at_end context while_bb in
       let cond = build_expr while_builder e in
       ignore(L.build_cond_br cond do_bb end_bb while_builder); (* conditional branch at end of while_bb to either do_bb or end_bb *)
-      ignore(L.build_br while_bb (L.builder_at_end context do_bb)); (* branch at end of do_bb to while_bb *)
+      ignore(L.build_br while_bb body_builder); (* branch at end of do_bb to while_bb *)
       L.builder_at_end context end_bb
   	| SReturn(e) -> ignore(L.build_ret (build_expr builder e) builder); builder
   	| SAssign(s, e) ->
