@@ -82,7 +82,7 @@ let check stmts vars funcs =
 								| Array(ty, _) when ty = t1 -> Bool
 								| String when t1 = Char -> Bool
 								| _ -> raise (Failure ("types do not match"))
-	  	    | _ -> raise (Failure err)
+	  	      | _ -> raise (Failure err)
 	  	  in
 	  	  (var_map, func_map, (t, SBinop((t1, e1), op, (t2, e2))))
 
