@@ -154,9 +154,10 @@ char contains_str(struct StrList *lst, char *val) {
 
 void print_str_list(struct StrList *lst) {
     struct StrNode *curr = lst->head;
+    printf("%s ", "[");
     while (curr != NULL) {
         printf("%s ", curr->val);
         curr = curr->next;
     }
-    printf("\n");
+    printf("]\n");
 }

@@ -38,8 +38,9 @@ char contains_str_arr(struct StrArray *arr, char *val) {
 }
 
 void print_str_arr(struct StrArray *arr) {
+    printf("%s ", "{");
     for (int i = 0; i < arr->size; i++) {
         printf("%s ", get_str_arr(arr, i));
     }
-    printf("\n");
+    printf("}\n");
 }

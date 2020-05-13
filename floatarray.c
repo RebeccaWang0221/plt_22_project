@@ -37,8 +37,9 @@ char contains_float_arr(struct FloatArray *arr, double val) {
 }
 
 void print_float_arr(struct FloatArray *arr) {
+    printf("%s ", "{");
     for (int i = 0; i < arr->size; i++) {
         printf("%f ", get_float_arr(arr, i));
     }
-    printf("\n");
+    printf("}\n");
 }

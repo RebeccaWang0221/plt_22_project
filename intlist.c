@@ -153,9 +153,10 @@ char contains_int(struct IntList *lst, int val) {
 
 void print_int_list(struct IntList *lst) {
     struct IntNode *curr = lst->head;
+    printf("%s ", "[");
     while (curr != NULL) {
         printf("%d ", curr->val);
         curr = curr->next;
     }
-    printf("\n");
+    printf("]\n");
 }
