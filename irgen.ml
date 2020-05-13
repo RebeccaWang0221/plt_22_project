@@ -658,7 +658,7 @@ let translate stmts =
             | _ -> raise (Failure ("invalid type in array declaration")))
         | _ -> Hashtbl.add global_vars id pointer;
           builder)
-  	| SFuncDef(func_def) -> (* TEST: no clue if this is right, tried to implement similar to microc *)
+  	| SFuncDef(func_def) ->
       Hashtbl.clear local_vars;
       let name = func_def.sfname in
       let params_arr = Array.of_list func_def.sformals in
