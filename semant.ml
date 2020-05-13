@@ -77,11 +77,11 @@ let check stmts vars funcs =
             | Add | Sub | Mult | Div | Exp when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Float
 						| Add when ((t1 = String && t2 = Char) || (t1 = Char && t2 = String)) -> String
 						| Eq | Neq | Gt | Lt | Lte | Gte when ((t1 = Int && t2 = Float) || (t1 = Float && t2 = Int)) -> Bool
-						| In -> match t2 with
+						| In -> (match t2 with
 							  | List(ty) when ty = t1 -> Bool
 								| Array(ty, _) when ty = t1 -> Bool
 								| String when t1 = Char -> Bool
-								| _ -> raise (Failure ("types do not match"))
+								| _ -> raise (Failure ("types do not match")))
 	  	      | _ -> raise (Failure err)
 	  	  in
 	  	  (var_map, func_map, (t, SBinop((t1, e1), op, (t2, e2))))
@@ -144,8 +144,6 @@ let check stmts vars funcs =
 				| Array(ty, sz) -> (var_map, func_map, (Int, SLen((t1, e1))))
 				| _ -> raise (Failure ("len expression cannot be called with type " ^ string_of_typ t1))
 
-	  | _ -> raise (Failure ("invalid expression"))
-
 	in
 
 	let check_bool_expr var_map func_map ex =
@@ -179,8 +177,14 @@ let check stmts vars funcs =
 	    (((t1, e1) :: fst (fst ret), snd (fst ret)), snd ret)
 	  | DecAssign(s, e) as st :: tail ->
 	    let (m, _, s) = check_stmt var_map func_map st in
-	    let SDecAssign(bind, _) = s in
-	    let SBind(t1, e1) = bind in
+	    let (bind, _) = (match s with
+			  | SDecAssign(b, x) -> (b, x)
+				| _ -> raise (Failure ("invalid declaration and assignment")))
+			in
+	    let (t1, e1) = (match bind with
+			  | SBind(t2, e2) -> (t2, e2)
+				| _ -> raise (Failure ("invalid declaration and assignment")))
+			in
 	    let ret = check_func rtyp m func_map tail in
 	    (((t1, e1) :: fst (fst ret), s :: snd (fst ret)), snd ret)
 	  | Return(ex) :: tail ->
@@ -237,7 +241,9 @@ let check stmts vars funcs =
 	    else raise (Failure ("cannot declare variable with void type"))
 
 	  | FuncDef(vdec, formals, body) -> (* add func def to map *)
-	  	let Bind(ty, name) = vdec
+	  	let (ty, name) = (match vdec with
+			  | Bind(t, n) -> (t, n)
+				| _ -> raise (Failure ("invalid function declaration")))
 	  	and (params, m1) = check_func_params StringMap.empty func_map formals in
 	  	let ((locals, bod), m2) = check_func ty m1 func_map body in
 	 	  let fdef = { srtyp=ty; sfname=name; sformals=params; slocals=locals; sbody=bod } in
@@ -268,7 +274,9 @@ let check stmts vars funcs =
 
 	  | Range(st1, e1, e2, e3, st2_lst) ->
 	  	let (m1, _, s1) = check_stmt var_map func_map st1 in
-	  	let SBind(t1, e1) = s1
+	  	let (t1, e1) = (match s1 with
+			  | SBind(t, e) -> (t, e)
+				| _ -> raise (Failure ("invalid range declaration")))
 	  	and (_, _, (t2, e2)) = check_expr m1 func_map e1
 			and (_, _, (t3, e3)) = check_expr m1 func_map e2
 			and (_, _, (t4, e4)) = check_expr m1 func_map e3 in
@@ -281,7 +289,9 @@ let check stmts vars funcs =
 
 		| IRange(var, e, st_lst) ->
 			let (m1, _, s1) = check_stmt var_map func_map var in
-			let SBind(t1, e1) = s1
+			let (t1, e1) = (match s1 with
+			  | SBind(t, e) -> (t, e)
+				| _ -> raise (Failure ("invalid irange declaration")))
 			and (_, _, (t2, e2)) = check_expr m1 func_map e in
 			let sst_lst = check_stmt_list m1 func_map st_lst in
 			if t1 = Int then
@@ -321,7 +331,9 @@ let check stmts vars funcs =
 
 	  | DecAssign(st, ex) ->
 	    let (m1, _, s) = check_stmt var_map func_map st in
-	    let SBind(t1, e1) = s
+	    let (t1, e1) = (match s with
+			  | SBind(t, e) -> (t, e)
+				| _ -> raise (Failure ("invalid declaration and assignment")))
 	    and (m2, _, (t2, e2)) = check_expr m1 func_map ex in
 	    let err = "illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2
 			in
@@ -363,7 +375,7 @@ let check stmts vars funcs =
 
 	  | Print ex -> (* ensure ex is valid for print *)
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
-	    let t = match t1 with
+	    let _ = match t1 with
 	      | Int | Float | Bool | String | Char -> t1
 				| List x -> t1
 				| Array(x1, x2) -> t1
