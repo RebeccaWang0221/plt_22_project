@@ -410,7 +410,13 @@ let translate stmts =
                     | List(_) -> L.build_call contains_int [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder
                     | Array(_, _) -> L.build_call contains_int_arr [| pointer ; (L.const_intcast e1' i32_t false) |] "" builder
                     | _ -> raise (Failure ("invalid in operation")))
-                else raise (Failure ("invalid operation"))
+                else
+                let e1' = build_expr builder e1
+                and e2' = build_expr builder e2 in
+                (match op with
+                  | Ast.And -> L.build_and e1' e2' "and" builder
+                  | Ast.Or -> L.build_or e1' e2' "or" builder
+                  | _ -> raise (Failure ("invalid operation on bool types")))
               | _ -> raise (Failure ("invalid binary operation of type bool")))
         	| Ast.Int ->
         	  let e1' = build_expr builder e1
@@ -796,7 +802,7 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
   	| SRange(var, beg, ed, st, body) -> (* TEST *)
       let (t, n) = (match var with
@@ -823,7 +829,7 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "range_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
     | SIRange(v1, v2, body) ->
       let (t, n) = (match v1 with
@@ -866,7 +872,7 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "irange_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      Hashtbl.clear local_vars;
+      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
