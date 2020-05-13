@@ -107,6 +107,7 @@ expr:
   | expr DOT INDEX LPAREN expr RPAREN  { Index($1, $5) }
   | expr DOT POP LPAREN expr RPAREN  { Pop($1, $5) }
   | LBRACK args RBRACK  { ListLit($2) }
+  | LBRACE args RBRACE  { ArrayLit($2) }
 
 typ:
     INT  { Int }

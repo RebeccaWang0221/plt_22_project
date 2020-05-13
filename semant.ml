@@ -48,6 +48,18 @@ let check stmts vars funcs =
 			let se_lst = build_list_lit t e_lst in
 			(var_map, func_map, (t, SListLit(se_lst)))
 
+		| ArrayLit(e_lst) ->
+		  let (_, _, (t, _)) = check_expr var_map func_map (List.hd e_lst) in
+			let rec build_arr_lit ty = function
+			  | [] -> []
+				| _ as st :: tail ->
+				  let (_, _, (t1, e1)) = check_expr var_map func_map st in
+					if t1 <> ty then raise (Failure("types of array elements must match"))
+					else (t1, e1) :: build_arr_lit ty tail
+			in
+			let se_lst = build_arr_lit t e_lst in
+			(var_map, func_map, (t, SArrayLit(se_lst)))
+
 	  | Binop(ex1, op, ex2) -> (* check ex1 and ex2 recursively *)
 	  	let (_, _, (t1, e1)) = check_expr var_map func_map ex1
 	  	and (_, _, (t2, e2)) = check_expr var_map func_map ex2 in
@@ -321,13 +333,30 @@ let check stmts vars funcs =
 									| _ -> raise (Failure ("can only assign to a variable"))
 							else raise (Failure err)
 						| _ -> raise (Failure (err)))
+				| Array(ty, sz) ->
+				  let size = (match sz with
+					  | IntLit(i) -> i
+						| _ -> raise (Failure ("size of array must be an integer")))
+					in
+				  (match e2 with
+						| SArrayLit(s_lst) ->
+						  if List.length s_lst <> size then raise (Failure ("array literal must match size of array declaration"))
+							else
+							(match e1 with
+								| SId(s) when ty = t2 -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+								| _ -> raise (Failure ("must assign to a variable, the array types may be mismatched")))
+						| _ -> raise (Failure (err)))
 				| _ ->
-			  	if t1 = t2 then
-			  	  match e1 with
-			  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-							| SAccess(id, num) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
-			  	    | _ -> raise (Failure ("can only assign to a variable"))
-			  	else raise (Failure err))
+				  (match e2 with
+					  | SListLit(s_lst) -> raise (Failure ("cannot assign variable of type " ^ string_of_typ t1 ^ " to a list literal"))
+						| SArrayLit(s_lst) -> raise (Failure ("cannot assign variable of type " ^ string_of_typ t1 ^ " to an array literal"))
+						| _ ->
+					  	if t1 = t2 then
+					  	  match e1 with
+					  	    | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+									| SAccess(id, num) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+					  	    | _ -> raise (Failure ("can only assign to a variable"))
+					  	else raise (Failure err)))
 
 	  | DecAssign(st, ex) ->
 	    let (m1, _, s) = check_stmt var_map func_map st in

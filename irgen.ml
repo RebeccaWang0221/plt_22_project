@@ -891,7 +891,13 @@ let translate stmts =
                 | _ -> raise (Failure ("invalid assignment on list type")))
               in
               ignore(build_list_lit pointer builder lst); builder
-            | Array(t, sz) -> raise (Failure ("hhhhh"));
+            | Array(t, sz) ->
+              let pointer = lookup name in
+              let (_, arr) = (match e with
+                | (x, SArrayLit(l)) -> (x, l)
+                | _ -> raise (Failure ("invalid assignment an array type")))
+              in
+              ignore(build_arr_lit pointer builder 0 arr); builder
             | _ ->
               let e' = build_expr builder e in
               ignore(L.build_store e' (lookup name) builder); builder)
