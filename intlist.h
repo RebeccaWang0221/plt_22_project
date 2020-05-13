@@ -32,4 +32,6 @@ char contains_int(struct IntList *lst, int val);
 
 int int_list_size(struct IntList *lst);
 
+void copy_int_list(struct IntList *src, struct IntList *tgt);
+
 void assign_int(struct IntList *lst, int idx, int val);

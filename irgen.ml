@@ -96,6 +96,8 @@ let translate stmts =
   let contains_int_t : L.lltype = L.function_type i1_t [| L.pointer_type int_list_t ; i32_t |] in
   let contains_int : L.llvalue = L.declare_function "contains_int" contains_int_t the_module in
   let assign_int : L.llvalue = L.declare_function "assign_int" insert_int_t the_module in
+  let copy_int_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_list_t ; L.pointer_type int_list_t |] in
+  let copy_int_list : L.llvalue = L.declare_function "copy_int_list" copy_int_list_t the_module in
 
   let init_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t |] in
   let init_float_list : L.llvalue = L.declare_function "init_float_list" init_float_list_t the_module in
@@ -116,6 +118,8 @@ let translate stmts =
   let contains_float_t : L.lltype = L.function_type i1_t [| L.pointer_type float_list_t ; float_t |] in
   let contains_float : L.llvalue = L.declare_function "contains_float" contains_float_t the_module in
   let assign_float : L.llvalue = L.declare_function "assign_float" insert_float_t the_module in
+  let copy_float_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_list_t ; L.pointer_type float_list_t |] in
+  let copy_float_list : L.llvalue = L.declare_function "copy_float_list" copy_float_list_t the_module in
 
   let init_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t |] in
   let init_str_list : L.llvalue = L.declare_function "init_str_list" init_str_list_t the_module in
@@ -136,6 +140,8 @@ let translate stmts =
   let contains_str_t : L.lltype = L.function_type i1_t [| L.pointer_type str_list_t ; string_t |] in
   let contains_str : L.llvalue = L.declare_function "contains_str" contains_str_t the_module in
   let assign_str : L.llvalue = L.declare_function "assign_str" insert_str_t the_module in
+  let copy_str_list_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_list_t ; L.pointer_type str_list_t |] in
+  let copy_str_list : L.llvalue = L.declare_function "copy_str_list" copy_str_list_t the_module in
 
   let init_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t ; i32_t |] in
   let init_int_arr : L.llvalue = L.declare_function "init_int_arr" init_int_arr_t the_module in
@@ -149,6 +155,8 @@ let translate stmts =
   let contains_int_arr : L.llvalue = L.declare_function "contains_int_arr" contains_int_arr_t the_module in
   let print_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t |] in
   let print_int_arr : L.llvalue = L.declare_function "print_int_arr" print_int_arr_t the_module in
+  let copy_int_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type int_arr_t ;  L.pointer_type int_arr_t |] in
+  let copy_int_arr : L.llvalue = L.declare_function "copy_int_arr" copy_int_arr_t the_module in
 
   let init_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t ; i32_t |] in
   let init_float_arr : L.llvalue = L.declare_function "init_float_arr" init_float_arr_t the_module in
@@ -162,6 +170,8 @@ let translate stmts =
   let contains_float_arr : L.llvalue = L.declare_function "contains_float_arr" contains_float_arr_t the_module in
   let print_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t |] in
   let print_float_arr : L.llvalue = L.declare_function "print_float_arr" print_float_arr_t the_module in
+  let copy_float_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type float_arr_t ;  L.pointer_type float_arr_t |] in
+  let copy_float_arr : L.llvalue = L.declare_function "copy_float_arr" copy_float_arr_t the_module in
 
   let init_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t ; i32_t |] in
   let init_str_arr : L.llvalue = L.declare_function "init_str_arr" init_str_arr_t the_module in
@@ -175,6 +185,8 @@ let translate stmts =
   let contains_str_arr : L.llvalue = L.declare_function "contains_str_arr" contains_str_arr_t the_module in
   let print_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t |] in
   let print_str_arr : L.llvalue = L.declare_function "print_str_arr" print_str_arr_t the_module in
+  let copy_str_arr_t : L.lltype = L.function_type (L.void_type context) [| L.pointer_type str_arr_t ;  L.pointer_type str_arr_t |] in
+  let copy_str_arr : L.llvalue = L.declare_function "copy_str_arr" copy_str_arr_t the_module in
 
   (* this will act as a main function "wrapper" of sorts so that we can append blocks to it - trying to treat entire script as main function *)
   let main_ft = L.function_type i32_t [||] in
@@ -898,18 +910,28 @@ let translate stmts =
           (match ty with
             | List(t) ->
               let pointer = lookup name in
-              let (_, lst) = (match e with
-                | (x, SListLit(l)) -> (x, l)
-                | _ -> raise (Failure ("invalid assignment on list type")))
-              in
-              ignore(build_list_lit pointer builder lst); builder
+              (match e with
+                | (_, SListLit(l)) -> ignore(build_list_lit pointer builder l); builder
+                | (List(ty), SId(s)) ->
+                  let p2 = lookup s in
+                  (match ty with
+                    | Int | Bool -> ignore(L.build_call copy_int_list [| p2 ; pointer |] "" builder); builder
+                    | String | Char -> ignore(L.build_call copy_str_list [| p2 ; pointer |] "" builder); builder
+                    | Float -> ignore(L.build_call copy_float_list [| p2 ; pointer |] "" builder); builder
+                    | _ -> raise (Failure "invalid assignment on type list"))
+                | _ -> raise (Failure ("invalid assignment on type list")))
             | Array(t, sz) ->
               let pointer = lookup name in
-              let (_, arr) = (match e with
-                | (x, SArrayLit(l)) -> (x, l)
-                | _ -> raise (Failure ("invalid assignment an array type")))
-              in
-              ignore(build_arr_lit pointer builder 0 arr); builder
+              (match e with
+                | (_, SArrayLit(l)) -> ignore(build_arr_lit pointer builder 0 l); builder
+                | (Array(ty2, sz2), SId(s)) ->
+                  let p2 = lookup s in
+                  (match ty2 with
+                    | Int | Bool -> ignore(L.build_call copy_int_arr [| p2 ; pointer |] "" builder); builder
+                    | String | Char -> ignore(L.build_call copy_str_arr [| p2 ; pointer |] "" builder); builder
+                    | Float -> ignore(L.build_call copy_float_arr [| p2 ; pointer |] "" builder); builder
+                    | _ -> raise (Failure ("invalid assignment on type array")))
+                | _ -> raise (Failure ("not yet array")))
             | _ ->
               let e' = build_expr builder e in
               ignore(L.build_store e' (lookup name) builder); builder)
@@ -947,12 +969,28 @@ let translate stmts =
         | List(t1) ->
           let _ = build_stmt builder the_function s in
           let pointer = lookup id in
-          let (_, lst) = (match e with
-            | (x, SListLit(l)) -> (x, l)
-            | _ -> raise (Failure ("invalid declaration and assignment on type list")))
-          in
-          ignore(build_list_lit pointer builder lst);
-          builder
+          (match e with
+            | (_, SListLit(l)) -> ignore(build_list_lit pointer builder l); builder
+            | (List(ty2), SId(s)) ->
+              let p2 = lookup s in
+              (match ty2 with
+                | Int | Bool -> ignore(L.build_call copy_int_list [| p2 ; pointer |] "" builder); builder
+                | String | Char -> ignore(L.build_call copy_str_list [| p2 ; pointer |] "" builder); builder
+                | Float -> ignore(L.build_call copy_float_list [| p2 ; pointer |] "" builder); builder
+                | _ -> raise (Failure ("invalid assignment on type list")))
+            | _ -> raise (Failure ("invalid assignment on type list")))
+        | Array(t1, sz) ->
+          let _ = build_stmt builder the_function s in
+          let pointer = lookup id in
+          (match e with
+            | (Array(t2, _), SId(s)) ->
+              let p2 = lookup s in
+              (match t2 with
+                | Int | Bool -> ignore(L.build_call copy_int_arr [| p2 ; pointer |] "" builder); builder
+                | String | Char -> ignore(L.build_call copy_str_arr [| p2 ; pointer |] "" builder); builder
+                | Float ->  ignore(L.build_call copy_float_arr [| p2 ; pointer |] "" builder); builder
+                | _ -> raise (Failure ("invalid assignment on type array")))
+            | _ -> raise (Failure ("invalid assignment on type array")))
         | _ ->
           let e' = build_expr builder e in
           let pointer = L.build_alloca (ltype_of_typ ty) id builder in

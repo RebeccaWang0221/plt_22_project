@@ -151,6 +151,14 @@ char contains_int(struct IntList *lst, int val) {
     return 1;
 }
 
+void copy_int_list(struct IntList *src, struct IntList *tgt) {
+    struct IntNode *node = src->head;
+    while (node != NULL) {
+        append_int(tgt, node->val);
+        node = node->next;
+    }
+}
+
 void print_int_list(struct IntList *lst) {
     struct IntNode *curr = lst->head;
     printf("%s ", "[");

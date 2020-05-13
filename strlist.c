@@ -152,6 +152,14 @@ char contains_str(struct StrList *lst, char *val) {
     return 1;
 }
 
+void copy_str_list(struct StrList *src, struct StrList *tgt) {
+    struct StrNode *node = src->head;
+    while (node != NULL) {
+        append_str(tgt, node->val);
+        node = node->next;
+    }
+}
+
 void print_str_list(struct StrList *lst) {
     struct StrNode *curr = lst->head;
     printf("%s ", "[");

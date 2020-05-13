@@ -325,26 +325,35 @@ let check stmts vars funcs =
 	  	in
 			(match t1 with
 			  | List(ty) ->
-				  (match e2 with
-					  | SListLit(s_lst) ->
+				  (match (t2, e2) with
+					  | (_, SListLit(s_lst)) ->
 						  if ty = t2 then
 							  match e1 with
 								  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
 									| _ -> raise (Failure ("can only assign to a variable"))
 							else raise (Failure err)
+						| (List(ty1), _) ->
+						  if ty = ty1 then
+							  match e1 with
+								  | SId(s) -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
+									| _ -> raise (Failure ("can only assign to a variable"))
+							else raise (Failure (err))
 						| _ -> raise (Failure (err)))
 				| Array(ty, sz) ->
 				  let size = (match sz with
 					  | IntLit(i) -> i
 						| _ -> raise (Failure ("size of array must be an integer")))
 					in
-				  (match e2 with
-						| SArrayLit(s_lst) ->
+				  (match (t2, e2) with
+						| (_, SArrayLit(s_lst)) ->
 						  if List.length s_lst <> size then raise (Failure ("array literal must match size of array declaration"))
 							else
 							(match e1 with
 								| SId(s) when ty = t2 -> (m2, func_map, SAssign((t1, e1), (t2, e2)))
 								| _ -> raise (Failure ("must assign to a variable, the array types may be mismatched")))
+						| (Array(ty1, sz1), _) ->
+						  if (ty1 = ty) && (sz1 = sz) then (m2, func_map, SAssign((t1, e1), (t2, e2)))
+							else raise (Failure (err))
 						| _ -> raise (Failure (err)))
 				| _ ->
 				  (match e2 with
@@ -368,11 +377,20 @@ let check stmts vars funcs =
 			in
 			(match t1 with
 			  | List(ty) ->
-				  (match e2 with
-					  | SListLit(s_lst) ->
+				  (match (t2, e2) with
+					  | (_, SListLit(s_lst)) ->
 						  if ty = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 							else raise (Failure err)
+						| (List(ty1), _) ->
+						  if ty = ty1 then (m2, func_map, SDecAssign(s, (t2, e2)))
+							else raise (Failure err)
 						| _ -> raise (Failure err))
+				| Array(ty, sz) ->
+				  (match (t2, e2) with
+						| (Array(ty1, sz1), _) ->
+						  if (ty1 = ty) && (sz1 = sz) then (m2, func_map, SDecAssign(s, (t2, e2)))
+							else raise (Failure ("illegal assignment, expected expression of type " ^ string_of_typ t1 ^ " but got expression of type " ^ string_of_typ t2 ^ ", perhaps the sizes do not match"))
+						| _ -> raise (Failure (err)))
 				| _ ->
 					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 					else raise (Failure err))
