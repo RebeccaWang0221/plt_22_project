@@ -32,4 +32,6 @@ char contains_str(struct StrList *lst, char *val);
 
 void free_str_list(struct StrList *lst);
 
+void copy_str_list(struct StrList *src, struct StrList *tgt);
+
 void assign_str(struct StrList *lst, int idx, char *val);

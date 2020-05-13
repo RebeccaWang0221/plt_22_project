@@ -13,4 +13,6 @@ int int_arr_size(struct IntArray *arr);
 
 char contains_int_arr(struct IntArray *arr, int val);
 
+void copy_int_arr(struct IntArray *src, struct IntArray *tgt);
+
 void print_int_arr(struct IntArray *arr);

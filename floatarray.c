@@ -36,9 +36,16 @@ char contains_float_arr(struct FloatArray *arr, double val) {
     return 0;
 }
 
+void copy_float_arr(struct FloatArray *src, struct FloatArray *tgt) {
+    for (int i = 0; i < src->size; i++) {
+        tgt->data[i] = src->data[i];
+    }
+}
+
 void print_float_arr(struct FloatArray *arr) {
+    printf("%s ", "{");
     for (int i = 0; i < arr->size; i++) {
         printf("%f ", get_float_arr(arr, i));
     }
-    printf("\n");
+    printf("}\n");
 }

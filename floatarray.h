@@ -13,4 +13,6 @@ int float_arr_size(struct FloatArray *arr);
 
 char contains_float_arr(struct FloatArray *arr, double val);
 
+void copy_float_arr(struct FloatArray *src, struct FloatArray *tgt);
+
 void print_float_arr(struct FloatArray *arr);

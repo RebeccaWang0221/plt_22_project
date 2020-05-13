@@ -151,11 +151,20 @@ char contains_float(struct FloatList *lst, double val) {
     return 1;
 }
 
+void copy_float_list(struct FloatList *src, struct FloatList *tgt) {
+    struct FloatNode *node = src->head;
+    while (node != NULL) {
+        append_float(tgt, node->val);
+        node = node->next;
+    }
+}
+
 void print_float_list(struct FloatList *lst) {
     struct FloatNode *curr = lst->head;
+    printf("%s ", "[");
     while (curr != NULL) {
         printf("%f ", curr->val);
         curr = curr->next;
     }
-    printf("\n");
+    printf("]\n");
 }
