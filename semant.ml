@@ -82,7 +82,7 @@ let check stmts vars funcs =
 								| Array(ty, _) when ty = t1 -> Bool
 								| String when t1 = Char -> Bool
 								| _ -> raise (Failure ("types do not match"))
-	  	    | _ -> raise (Failure err)
+	  	      | _ -> raise (Failure err)
 	  	  in
 	  	  (var_map, func_map, (t, SBinop((t1, e1), op, (t2, e2))))
 
@@ -114,7 +114,8 @@ let check stmts vars funcs =
 	      match t1 with
 	        | List(ty) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
 	        | Array(ty, e) -> (var_map, func_map, (ty, SAccess((t1, e1), (t2, e2))))
-	        | _ -> raise (Failure ("invalid access on non list/array type"))
+					| String -> (var_map, func_map, (Char, SAccess((t1, e1), (t2, e2))))
+	        | _ -> raise (Failure ("invalid access on non list/array/string type"))
 			else raise (Failure ("list/array access index must be of type int"))
 
 		| Index(id, e) ->
@@ -286,7 +287,7 @@ let check stmts vars funcs =
 			if t1 = Int then
 				match t2 with
 				  | List(ty) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
-					| Array(ty, e) -> raise (Failure ("not yet implemented"))
+					| Array(ty, e) -> (m1, func_map, SIRange(s1, (t2, e2), sst_lst))
 					| _ -> raise (Failure ("irange loop cannot be used with expression of type " ^ string_of_typ t2))
 			else raise (Failure("for-irange loop must be used with variable of type int"))
 
@@ -334,6 +335,26 @@ let check stmts vars funcs =
 				| _ ->
 					if t1 = t2 then (m2, func_map, SDecAssign(s, (t2, e2)))
 					else raise (Failure err))
+
+		| ArrayAssign(st, e_lst) ->
+		  let (m1, _, s) = check_stmt var_map func_map st in
+			let (t1, e1) = match s with
+			  | SBind(t, e) -> (t, e)
+				| _ -> raise (Failure ("can only assign to a variable"))
+			in
+			let (arr_t, size) = match t1 with
+			  | Array(t, IntLit(sz)) -> (t, sz)
+				| _ -> raise (Failure ("cannot assign to array"))
+			in
+			let rec check_lit_list = function
+			  | [] -> []
+				| _ as e :: tail ->
+				  let (_, _, (t2, e2)) = check_expr m1 func_map e in
+					if t2 = arr_t then (t2, e2) :: check_lit_list tail
+					else raise (Failure ("array literal expected type " ^ string_of_typ arr_t ^ " but got type " ^ string_of_typ t2))
+			in
+			let se_lst = check_lit_list e_lst in
+			(m1, func_map, SArrayAssign(s, se_lst))
 
 	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
 	  	let sst_lst = check_stmt_list StringMap.empty func_map st_lst in

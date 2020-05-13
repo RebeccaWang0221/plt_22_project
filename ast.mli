@@ -37,13 +37,13 @@ type stmt =
   | Return of expr
   | Assign of expr * expr
   | DecAssign of stmt * expr
+  | ArrayAssign of stmt * expr list
   | DecArr of stmt * expr list
   | Struct of string * stmt list
   | Print of expr
   | Append of expr * expr
   | Remove of expr * expr
   | Insert of expr * expr * expr
-  | ListAssign of expr * expr * expr
   | Cont
   | Break
   | Pass
