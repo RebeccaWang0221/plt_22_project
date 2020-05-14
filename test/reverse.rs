@@ -12,6 +12,6 @@ def void reverse_lst(list<int> lst) {
     }
 }
 
-list<int> x = [1,2,3,4,5,6];
+list<int> x = [1,2,3,4,5,6,7,8,9,10];
 reverse_lst(x);
 print(x);

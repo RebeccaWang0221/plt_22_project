@@ -16,4 +16,4 @@ def int computeGCD(int x, int y) {
     return gcd;
 }
 
-print(computeGCD(10, 5));
+print(computeGCD(60, 48));
