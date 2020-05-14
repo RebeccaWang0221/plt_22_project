@@ -1,0 +1,287 @@
+; ModuleID = 'RattleSnake'
+source_filename = "RattleSnake"
+
+%IntList = type { %IntNode*, i32 }
+%IntNode = type { i32, %IntNode* }
+%FloatList = type { %FloatNode*, double }
+%FloatNode = type { double, %FloatNode* }
+%StrList = type { %StrNode*, i32 }
+%StrNode = type { i8*, %StrNode* }
+%IntArray = type { i32*, i32 }
+%FloatArray = type { double*, i32 }
+%StrArray = type { i8**, i32 }
+
+@int_fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@str_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
+@str_fmt.1 = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
+@bool_fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+
+declare i32 @printf(i8*, ...)
+
+declare i1 @str_comp(i8*, i8*)
+
+declare i1 @str_diff(i8*, i8*)
+
+declare i8* @str_concat(i8*, i8*)
+
+declare i32 @str_size(i8*)
+
+declare i1 @contains_strstr(i8*, i8*)
+
+declare i8* @access_str(i8*, i32)
+
+declare i32 @pow_int(i32, i32)
+
+declare double @pow_float(double, double)
+
+declare void @init_int_list(%IntList*)
+
+declare void @print_int_list(%IntList*)
+
+declare void @append_int(%IntList*, i32)
+
+declare void @remove_int(%IntList*, i32)
+
+declare i32 @get_int(%IntList*, i32)
+
+declare void @insert_int(%IntList*, i32, i32)
+
+declare i32 @pop_int(%IntList*, i32)
+
+declare i32 @index_int(%IntList*, i32)
+
+declare i32 @int_list_size(%IntList*)
+
+declare i1 @contains_int(%IntList*, i32)
+
+declare void @assign_int(%IntList*, i32, i32)
+
+declare void @copy_int_list(%IntList*, %IntList*)
+
+declare void @init_float_list(%FloatList*)
+
+declare void @print_float_list(%FloatList*)
+
+declare void @append_float(%FloatList*, double)
+
+declare void @remove_float(%FloatList*, i32)
+
+declare double @get_float(%FloatList*, i32)
+
+declare void @insert_float(%FloatList*, i32, double)
+
+declare double @pop_float(%FloatList*, i32)
+
+declare i32 @index_float(%FloatList*, double)
+
+declare i32 @float_list_size(%FloatList*)
+
+declare i1 @contains_float(%FloatList*, double)
+
+declare void @assign_float(%FloatList*, i32, double)
+
+declare void @copy_float_list(%FloatList*, %FloatList*)
+
+declare void @init_str_list(%StrList*)
+
+declare void @print_str_list(%StrList*)
+
+declare void @append_str(%StrList*, i8*)
+
+declare void @remove_str(%StrList*, i32)
+
+declare i8* @get_str(%StrList*, i32)
+
+declare void @insert_str(%StrList*, i32, i8*)
+
+declare i8* @pop_str(%StrList*, i32)
+
+declare i32 @index_str(%StrList*, i8*)
+
+declare i32 @str_list_size(%StrList*)
+
+declare i1 @contains_str(%StrList*, i8*)
+
+declare void @assign_str(%StrList*, i32, i8*)
+
+declare void @copy_str_list(%StrList*, %StrList*)
+
+declare void @init_int_arr(%IntArray*, i32)
+
+declare void @assign_int_arr(%IntArray*, i32, i32)
+
+declare i32 @get_int_arr(%IntArray*, i32)
+
+declare i32 @int_arr_size(%IntArray*)
+
+declare i1 @contains_int_arr(%IntArray*, i32)
+
+declare void @print_int_arr(%IntArray*)
+
+declare void @copy_int_arr(%IntArray*, %IntArray*)
+
+declare void @init_float_arr(%FloatArray*, i32)
+
+declare void @assign_float_arr(%FloatArray*, i32, double)
+
+declare double @get_float_arr(%FloatArray*, i32)
+
+declare i32 @float_arr_size(%FloatArray*)
+
+declare i1 @contains_float_arr(%FloatArray*, double)
+
+declare void @print_float_arr(%FloatArray*)
+
+declare void @copy_float_arr(%FloatArray*, %FloatArray*)
+
+declare void @init_str_arr(%StrArray*, i32)
+
+declare void @assign_str_arr(%StrArray*, i32, i8*)
+
+declare i8* @get_str_arr(%StrArray*, i32)
+
+declare i32 @str_arr_size(%StrArray*)
+
+declare i1 @contains_str_arr(%StrArray*, i8*)
+
+declare void @print_str_arr(%StrArray*)
+
+declare void @copy_str_arr(%StrArray*, %StrArray*)
+
+define i32 @main() {
+entry:
+  %call_func = call i32 @add(i32 10, i32 5)
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func)
+  %call_func1 = call i32 @sub(i32 10, i32 5)
+  %printf2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func1)
+  %call_func3 = call i32 @mul(i32 10, i32 5)
+  %printf4 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func3)
+  %call_func5 = call i32 @div(i32 10, i32 5)
+  %printf6 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func5)
+  %call_func7 = call i32 @mod(i32 10, i32 3)
+  %printf8 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func7)
+  %call_func9 = call i32 @add_equal(i32 10)
+  %printf10 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func9)
+  %call_func11 = call i32 @sub_equal(i32 10)
+  %printf12 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func11)
+  %call_func13 = call i32 @mul_equal(i32 10)
+  %printf14 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func13)
+  %call_func15 = call i32 @div_equal(i32 10)
+  %printf16 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @int_fmt, i32 0, i32 0), i32 %call_func15)
+  ret i32 0
+}
+
+define i32 @add(i32 %x, i32 %y) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %y2 = alloca i32
+  store i32 %y, i32* %y2
+  %x3 = load i32, i32* %x1
+  %y4 = load i32, i32* %y2
+  %int_binop = add i32 %x3, %y4
+  ret i32 %int_binop
+  ret i32 0
+}
+
+define i32 @sub(i32 %x, i32 %y) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %y2 = alloca i32
+  store i32 %y, i32* %y2
+  %x3 = load i32, i32* %x1
+  %y4 = load i32, i32* %y2
+  %int_binop = sub i32 %x3, %y4
+  ret i32 %int_binop
+  ret i32 0
+}
+
+define i32 @mul(i32 %x, i32 %y) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %y2 = alloca i32
+  store i32 %y, i32* %y2
+  %x3 = load i32, i32* %x1
+  %y4 = load i32, i32* %y2
+  %int_binop = mul i32 %x3, %y4
+  ret i32 %int_binop
+  ret i32 0
+}
+
+define i32 @div(i32 %x, i32 %y) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %y2 = alloca i32
+  store i32 %y, i32* %y2
+  %x3 = load i32, i32* %x1
+  %y4 = load i32, i32* %y2
+  %int_binop = sdiv i32 %x3, %y4
+  ret i32 %int_binop
+  ret i32 0
+}
+
+define i32 @mod(i32 %x, i32 %y) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %y2 = alloca i32
+  store i32 %y, i32* %y2
+  %x3 = load i32, i32* %x1
+  %y4 = load i32, i32* %y2
+  %int_binop = srem i32 %x3, %y4
+  ret i32 %int_binop
+  ret i32 0
+}
+
+define i32 @add_equal(i32 %x) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %x2 = load i32, i32* %x1
+  %int_binop = add i32 %x2, 5
+  store i32 %int_binop, i32* %x1
+  %x3 = load i32, i32* %x1
+  ret i32 %x3
+  ret i32 0
+}
+
+define i32 @sub_equal(i32 %x) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %x2 = load i32, i32* %x1
+  %int_binop = sub i32 %x2, 5
+  store i32 %int_binop, i32* %x1
+  %x3 = load i32, i32* %x1
+  ret i32 %x3
+  ret i32 0
+}
+
+define i32 @mul_equal(i32 %x) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %x2 = load i32, i32* %x1
+  %int_binop = mul i32 %x2, 5
+  store i32 %int_binop, i32* %x1
+  %x3 = load i32, i32* %x1
+  ret i32 %x3
+  ret i32 0
+}
+
+define i32 @div_equal(i32 %x) {
+entry:
+  %x1 = alloca i32
+  store i32 %x, i32* %x1
+  %x2 = load i32, i32* %x1
+  %int_binop = sdiv i32 %x2, 5
+  store i32 %int_binop, i32* %x1
+  %x3 = load i32, i32* %x1
+  ret i32 %x3
+  ret i32 0
+}
+

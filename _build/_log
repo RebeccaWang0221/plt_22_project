@@ -1,0 +1,54 @@
+### Starting build.
+# Target: rattle.ml.depends, tags: { extension:ml, file:rattle.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules rattle.ml > rattle.ml.depends
+# Target: irgen.ml.depends, tags: { extension:ml, file:irgen.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules irgen.ml > irgen.ml.depends
+# Target: ast.mli.depends, tags: { extension:mli, file:ast.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules ast.mli > ast.mli.depends
+# Target: pretty.ml.depends, tags: { extension:ml, file:pretty.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules pretty.ml > pretty.ml.depends
+# Target: ast.cmi, tags: { byte, compile, extension:mli, file:ast.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o ast.cmi ast.mli
+# Target: sast.mli.depends, tags: { extension:mli, file:sast.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules sast.mli > sast.mli.depends
+# Target: pretty.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:pretty.cmo, file:pretty.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o pretty.cmo pretty.ml
+# Target: sast.cmi, tags: { byte, compile, extension:mli, file:sast.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o sast.cmi sast.mli
+# Target: parser.mly, tags: { extension:mly, file:parser.mly, infer, ocaml, ocamlyacc, parser, quiet }
+ocamlyacc parser.mly
+# Target: parser.mli.depends, tags: { extension:mli, file:parser.mli, ocaml, ocamldep, quiet }
+ocamldep.opt -modules parser.mli > parser.mli.depends
+# Target: scanner.mll, tags: { extension:mll, file:scanner.mll, lexer, ocaml, ocamllex, quiet }
+ocamllex.opt -q scanner.mll
+# Target: scanner.ml.depends, tags: { extension:ml, file:scanner.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules scanner.ml > scanner.ml.depends
+# Target: parser.cmi, tags: { byte, compile, extension:mli, file:parser.mli, interf, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o parser.cmi parser.mli
+# Target: semant.ml.depends, tags: { extension:ml, file:semant.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules semant.ml > semant.ml.depends
+# Target: irgen.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:irgen.cmo, file:irgen.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmo irgen.ml
+# Target: scanner.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:scanner.cmo, file:scanner.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o scanner.cmo scanner.ml
+# Target: semant.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:semant.cmo, file:semant.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o semant.cmo semant.ml
+# Target: rattle.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:rattle.cmo, file:rattle.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o rattle.cmo rattle.ml
+# Target: pretty.cmx, tags: { compile, extension:cmx, extension:ml, file:pretty.cmx, file:pretty.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o pretty.cmx pretty.ml
+# Target: parser.ml.depends, tags: { extension:ml, file:parser.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules parser.ml > parser.ml.depends
+# Target: parser.cmx, tags: { compile, extension:cmx, extension:ml, file:parser.cmx, file:parser.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o parser.cmx parser.ml
+# Target: irgen.cmx, tags: { compile, extension:cmx, extension:ml, file:irgen.cmx, file:irgen.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o irgen.cmx irgen.ml
+# Target: scanner.cmx, tags: { compile, extension:cmx, extension:ml, file:scanner.cmx, file:scanner.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o scanner.cmx scanner.ml
+# Target: semant.cmx, tags: { compile, extension:cmx, extension:ml, file:semant.cmx, file:semant.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o semant.cmx semant.ml
+# Target: rattle.cmx, tags: { compile, extension:cmx, extension:ml, file:rattle.cmx, file:rattle.ml, implem, native, ocaml, quiet }
+ocamlopt.opt -c -I /Users/rebecca/.opam/4.09.0/lib/llvm -o rattle.cmx rattle.ml
+# Target: rattle.native, tags: { dont_link_with, extension:native, file:rattle.native, link, native, ocaml, program, quiet }
+ocamlopt.opt -I /Users/rebecca/.opam/4.09.0/lib/llvm /Users/rebecca/.opam/4.09.0/lib/llvm/static/llvm.cmxa pretty.cmx irgen.cmx parser.cmx scanner.cmx semant.cmx rattle.cmx -o rattle.native
+# Compilation successful.
