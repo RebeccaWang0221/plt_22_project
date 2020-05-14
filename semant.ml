@@ -229,6 +229,11 @@ let check stmts vars funcs =
 	    and sst_lst2 = check_lst st2_lst in
 	    let ret = check_func rtyp var_map func_map tail in
 	    ((fst (fst ret), SIf((t, e), sst_lst1, sst_lst2) :: snd (fst ret)), snd ret)
+		| For(st, e, body) :: tail -> raise (Failure ("for not yet"))
+		| Range(st, e1, e2, e3, body) :: tail -> raise (Failure ("range not yet"))
+		| IRange(st, e, body) :: tail -> raise (Failure ("irange not yet"))
+		| While(e, body) :: tail -> raise (Failure ("while not yet"))
+		| Do(body, e) :: tail -> raise (Failure ("do not yet"))
 	  | _ as st :: tail ->
 	  	let (m, _, s) = check_stmt var_map func_map st in
 	  	let ret = check_func rtyp m func_map tail in
