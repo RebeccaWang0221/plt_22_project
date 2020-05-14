@@ -32,4 +32,6 @@ char contains_float(struct FloatList *lst, double val);
 
 void assign_float(struct FloatList *lst, int idx, double val);
 
+void copy_float_list(struct FloatList *src, struct FloatList *tgt);
+
 void free_float_list(struct FloatList *lst);

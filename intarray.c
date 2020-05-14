@@ -36,9 +36,16 @@ char contains_int_arr(struct IntArray *arr, int val) {
     return 0;
 }
 
+void copy_int_arr(struct IntArray *src, struct IntArray *tgt) {
+    for (int i = 0; i < src->size; i++) {
+        tgt->data[i] = src->data[i];
+    }
+}
+
 void print_int_arr(struct IntArray *arr) {
+    printf("%s ", "{");
     for (int i = 0; i < arr->size; i++) {
         printf("%d ", get_int_arr(arr, i));
     }
-    printf("\n");
+    printf("}\n");
 }

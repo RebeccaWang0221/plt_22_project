@@ -37,9 +37,18 @@ char contains_str_arr(struct StrArray *arr, char *val) {
     return 0;
 }
 
+void copy_str_arr(struct StrArray *src, struct StrArray *tgt) {
+    for (int i = 0; i < src->size; i++) {
+        char *tmp = (char *)malloc(sizeof(src->data[i]));
+        strcpy(tmp, src->data[i]);
+        tgt->data[i] = tmp;
+    }
+}
+
 void print_str_arr(struct StrArray *arr) {
+    printf("%s ", "{");
     for (int i = 0; i < arr->size; i++) {
         printf("%s ", get_str_arr(arr, i));
     }
-    printf("\n");
+    printf("}\n");
 }
