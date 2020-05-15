@@ -7,9 +7,9 @@ Commands to Run (Mac OSX):
 
     Run Commands:
 
-        ocamlbuild -pkgs llvm rattle.native
-        ./rattle.native -l program-file.rs > example.out
-        lli example.out
+        make
+	./rattle.native <file_to_run> 
+	./a.out
 
 
 
