@@ -68,7 +68,6 @@ rule token = parse
   | "pop"  { POP }
   | "index"  { INDEX }
   | "len"  { LEN }
-  | "struct"  { STCT }
   | "def"  { DEF }
   | "print"  { PRINT }
   | "array"  { ARRAY }

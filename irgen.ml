@@ -693,7 +693,7 @@ let translate stmts =
         | _ -> ignore(););
       Hashtbl.clear local_vars;
       builder
-  	| SIf(e, body, dstmts) -> (* TEST *)
+  	| SIf(e, body, dstmts) ->
       let entry = L.append_block context "if_entry" the_function in (* create entry point *)
       ignore (L.build_br entry builder);
       let cond = build_expr (L.builder_at_end context entry) e in
@@ -707,7 +707,7 @@ let translate stmts =
       else ignore(L.build_cond_br cond then_bb end_bb (L.builder_at_end context entry)); (* otherwise build conditional branch to end_bb *)
       ignore(L.build_br end_bb (L.builder_at_end context then_bb)); (* build branch to end_bb at end of then_bb *)
       L.builder_at_end context end_bb
-  	| SWhile(e, body) -> (* TEST *)
+  	| SWhile(e, body) ->
       let entry_bb = L.append_block context "while_entry" the_function in (* build entry block *)
       ignore (L.build_br entry_bb builder);
       let cond = build_expr (L.builder_at_end context entry_bb) e in (* build conditional inside of entry block *)
@@ -816,9 +816,8 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "for_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
-  	| SRange(var, beg, ed, st, body) -> (* TEST *)
+  	| SRange(var, beg, ed, st, body) ->
       let (t, n) = (match var with
         | SBind(t1, n1) -> (t1, n1)
         | _ -> raise (Failure ("invalid range declaration")))
@@ -845,7 +844,6 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in (* in entry_bb, load value for iterator on stack *)
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "range_cmp" entry_builder in (* then check if it equals end_val *)
       ignore(L.build_cond_br cond end_bb body_bb entry_builder); (* conditional branch at end of entry_bb *)
-      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
     | SIRange(v1, v2, body) ->
       let (t, n) = (match v1 with
@@ -890,7 +888,6 @@ let translate stmts =
       let curr_val = L.build_load iterator "load_iter" entry_builder in
       let cond = L.build_icmp L.Icmp.Sge curr_val end_val "irange_cmp" entry_builder in
       ignore(L.build_cond_br cond end_bb body_bb entry_builder);
-      (* Hashtbl.clear local_vars; *)
       L.builder_at_end context end_bb
   	| SDo(body, e) ->
       let do_bb = L.append_block context "do_body" the_function in (* create main loop body block *)
@@ -1008,8 +1005,6 @@ let translate stmts =
           ignore(build_arr_lit pointer builder 0 e_lst);
           builder
         | _ -> raise (Failure ("invalid array declaration and assignment")))
-  	| SStruct(id, body) -> (* TODO: no clue how to do this yet *)
-      builder
     | SPrint(e) ->
       (match e with
         | (Int, _) ->
@@ -1047,7 +1042,7 @@ let translate stmts =
             | String | Char -> ignore(L.build_call print_str_arr [| pointer |] "" builder); builder
             | _ -> raise (Failure ("invalid print call on array type")))
         | _ -> raise (Failure ("invalid print call")))
-    | SAppend(e1, e2) ->  (* C-Linking: In these cases we need to use build_call to call the C function *)
+    | SAppend(e1, e2) ->
       let (t, s) = (match e1 with
         | (List(t1), SId(s1)) -> (t1, s1)
         | _ -> raise (Failure ("cannot call append on non list type")))
