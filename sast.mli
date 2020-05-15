@@ -35,7 +35,6 @@ type sstmt =
   | SAssign of sexpr * sexpr
   | SDecAssign of sstmt * sexpr
   | SArrayAssign of sstmt * sexpr list
-  | SStruct of string * sstmt list
   | SPrint of sexpr
   | SAppend of sexpr * sexpr
   | SRemove of sexpr * sexpr

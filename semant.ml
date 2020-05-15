@@ -383,11 +383,6 @@ let check stmts vars funcs =
 			let se_lst = check_lit_list e_lst in
 			(m1, func_map, SArrayAssign(s, se_lst))
 
-	  | Struct(s, st_lst) -> (* check each variable declaration in st_lst, add to var_map *)
-	  	let sst_lst = check_stmt_list StringMap.empty func_map rty st_lst in
-	  	let var_map' = add_var var_map s Stct in
-	  	(var_map', func_map, SStruct(s, sst_lst))
-
 	  | Print ex -> (* ensure ex is valid for print *)
 	    let (_, _, (t1, e1)) = check_expr var_map func_map ex in
 	    let _ = match t1 with

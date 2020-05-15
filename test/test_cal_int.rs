@@ -10,7 +10,7 @@ def int mul(int x, int y){
   return x * y;
 }
 
-def float div(int x, int y){
+def int div(int x, int y){
   return x / y;
 }
 
@@ -32,16 +32,16 @@ def int mul_equal(int x){
   x*=5;
   return x;
 }
-#!
+
 def int div_equal(int x){
   x /= 5;
   return x;
 }
-!#
+
 print(add(10, 5));
 print(sub(10, 5));
 print(mul(10, 5));
 print(add_equal(10));
 print(sub_equal(10));
 print(mul_equal(10));
-#!print(div_equal(10.0));!#
+print(div_equal(10));

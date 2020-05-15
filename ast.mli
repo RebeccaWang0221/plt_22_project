@@ -40,7 +40,6 @@ type stmt =
   | DecAssign of stmt * expr
   | ArrayAssign of stmt * expr list
   | DecArr of stmt * expr list
-  | Struct of string * stmt list
   | Print of expr
   | Append of expr * expr
   | Remove of expr * expr

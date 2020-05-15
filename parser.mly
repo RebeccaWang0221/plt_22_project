@@ -4,7 +4,7 @@
 %token DIVIDE TIMES MOD
 %token EQ NEQ LT GT LTE GTE AND OR NOT INC DEC EXP
 %token IF ELSE ELIF FOR WHILE DO IN INT CHAR FLOAT STRING BOOL VOID
-%token ARRAY LIST STCT DEF RANGE IRANGE
+%token ARRAY LIST DEF RANGE IRANGE
 %token APPEND REMOVE INSERT POP INDEX LEN
 %token RETURN BREAK CONT PASS COMMA PRINT DOT
 %token <int> INTLIT
@@ -63,7 +63,6 @@ stmt:
   | expr ASSIGN expr SEMI  { Assign($1, $3) }
   | vdecl ASSIGN expr SEMI  { DecAssign($1, $3) }
   | RETURN expr SEMI  { Return $2 }
-  | STCT ID LBRACE vdecl_list RBRACE  { Struct($2, $4) }
   | PRINT LPAREN expr RPAREN SEMI  { Print($3) }
   | CONT SEMI  { Cont }
   | BREAK SEMI  { Break }
@@ -120,10 +119,6 @@ vdecl:
   | LIST LT typ GT ID  { Bind(List($3), $5) }
   | ARRAY LT typ GT ID LBRACK expr RBRACK  { Bind(Array($3, $7), $5) }
   | typ ID LBRACK expr RBRACK  { Bind(Array($1, $4), $2) }
-
-vdecl_list:
-    vdecl SEMI  { $1::[] }
-  | vdecl SEMI vdecl_list  { $1::$3 }
 
 fdecl:
     DEF vdecl LPAREN fcall_args RPAREN LBRACE stmt_list RBRACE  { FuncDef($2, $4, $7) }

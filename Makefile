@@ -31,4 +31,4 @@ exp.o: exp.h exp.c
 clean:
 	ocamlbuild -clean
 	rm -f *.native
-	rm -f *.o *.a a.out *.s
+	rm -f *.o *.a a.out llvm.out *.s

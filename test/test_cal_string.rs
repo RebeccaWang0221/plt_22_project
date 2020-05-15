@@ -8,9 +8,9 @@ if s == "apple" {
 }
 
 string s2;
-s2 = "banana"
+s2 = "banana";
 
-if s != "apple"{
+if s2 != "apple" {
   print("banana");
 } else {
   print("apple");

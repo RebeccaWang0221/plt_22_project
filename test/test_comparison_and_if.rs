@@ -1,5 +1,5 @@
 int i;
-i = 5;
+i = 3;
 
 if i > 3 {
   print("i is greater than 3");
